@@ -6,7 +6,11 @@ function getSupabaseClient() {
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase environment variables. Please set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel.');
+    console.error('Missing Supabase environment variables:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey
+    });
+    return null;
   }
 
   return createClient(supabaseUrl, supabaseKey);
@@ -28,6 +32,14 @@ module.exports = async function handler(req, res) {
 
   try {
     const supabase = getSupabaseClient();
+    
+    if (!supabase) {
+      return res.status(500).json({ 
+        error: 'Database not configured', 
+        message: 'Missing Supabase environment variables. Please set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel.',
+        hint: 'Check Vercel Settings → Environment Variables'
+      });
+    }
     
     switch (req.method) {
       case 'GET':
