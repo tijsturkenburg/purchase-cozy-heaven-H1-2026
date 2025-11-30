@@ -3,8 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Ensure data directory exists
-// Use /data if available (Render persistent disk), otherwise use local data directory
-const dataDir = process.env.RENDER_DISK_PATH || path.join(__dirname, 'data');
+const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }

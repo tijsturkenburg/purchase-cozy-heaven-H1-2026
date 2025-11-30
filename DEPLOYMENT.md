@@ -39,56 +39,10 @@ git push origin main
 2. Test creating a scenario
 3. The database will persist across deployments
 
-## Alternative: Deploy to Render
-
-### Option 1: Deploy via Render.yaml (Easiest)
-
-1. **Go to Render**: Visit [render.com](https://render.com) and sign up/login
-
-2. **Create New Web Service**:
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Select: `purchase-cozy-heaven-H1_2026`
-
-3. **Render Auto-Configuration**:
-   - Render will detect `render.yaml` automatically
-   - It will configure:
-     - Build command: `npm run build`
-     - Start command: `npm start`
-     - Persistent disk: 1GB mounted at `/data`
-     - Environment variables
-
-4. **Deploy**:
-   - Click "Create Web Service"
-   - Render will build and deploy automatically
-   - Your app will be live at: `https://your-app-name.onrender.com`
-
-### Option 2: Manual Configuration
-
-1. Go to [render.com](https://render.com) and sign up
-2. Click "New +" → "Web Service"
-3. Connect your GitHub repository
-4. Configure:
-   - **Name**: purchase-cozy-heaven
-   - **Environment**: Node
-   - **Build Command**: `npm run build`
-   - **Start Command**: `npm start`
-   - **Plan**: Free (or paid for persistent disk)
-5. **Add Persistent Disk**:
-   - Go to "Disks" tab
-   - Click "Add Disk"
-   - Name: `data-disk`
-   - Mount Path: `/data`
-   - Size: 1GB (minimum)
-   - Click "Save"
-6. **Environment Variables** (optional):
-   - Add `NODE_ENV=production`
-7. Click "Create Web Service" to deploy!
 
 ## Database Persistence
 
 - **Railway**: Database automatically persists in Railway's storage
-- **Render**: Requires adding a persistent disk (see above)
 - **Local**: Database stored in `data/scenarios.db`
 
 ## Troubleshooting
