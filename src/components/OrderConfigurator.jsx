@@ -105,9 +105,9 @@ export default function OrderConfigurator() {
   const [showScenarioManager, setShowScenarioManager] = useState(false);
   const [newScenarioName, setNewScenarioName] = useState('');
 
-  // Product distribution percentages based on the image
-  const productPercentages = {
-    // Bedding Sets (Bettwäsche) - percentages
+  // Product distribution percentages (unit-based from image)
+  const unitPercentages = {
+    // Bedding Sets (Bettwäsche) - unit percentages
     'set-135-200-40-80': 15,
     'set-135-200-80-80': 26,
     'set-155-220-40-80': 7,
@@ -119,11 +119,11 @@ export default function OrderConfigurator() {
     'set-240-220-40-80-2x': 1,
     'set-240-220-80-80-2x': 1,
     
-    // Pillowcases (Kissenbezug) - percentages
+    // Pillowcases (Kissenbezug) - unit percentages
     'pc-40-80': 70,
     'pc-80-80': 30,
     
-    // Fitted Sheets (Spannbettlaken) - percentages
+    // Fitted Sheets (Spannbettlaken) - unit percentages
     'fs-100-200': 4,
     'fs-120-200': 1,
     'fs-140-200': 4,
@@ -133,6 +133,49 @@ export default function OrderConfigurator() {
     'fs-200-220': 3,
     'fs-90-200': 7
   };
+
+  // Calculate fabric-based percentages (percentage of total fabric needed)
+  // This converts unit percentages to fabric percentages based on material requirements per item
+  const calculateFabricBasedPercentages = () => {
+    const fabricWeights = {};
+    let totalFabricWeight = 0;
+
+    // Calculate fabric weight for each product (unit_percentage * fabric_per_unit)
+    Object.entries(unitPercentages).forEach(([productId, unitPct]) => {
+      const product = fabricProducts.find(p => p.id === productId);
+      if (product) {
+        const fabricPerUnit = calculateFabric(
+          product.width, 
+          product.length, 
+          product.type, 
+          product.pillowSize, 
+          product.pillowCount
+        );
+        const fabricWeight = unitPct * fabricPerUnit;
+        fabricWeights[productId] = {
+          unitPercentage: unitPct,
+          fabricPerUnit: fabricPerUnit,
+          fabricWeight: fabricWeight
+        };
+        totalFabricWeight += fabricWeight;
+      }
+    });
+
+    // Normalize to get fabric-based percentages (percentage of total fabric)
+    const fabricPercentages = {};
+    Object.entries(fabricWeights).forEach(([productId, data]) => {
+      fabricPercentages[productId] = {
+        fabricPercentage: (data.fabricWeight / totalFabricWeight) * 100,
+        unitPercentage: data.unitPercentage,
+        fabricPerUnit: data.fabricPerUnit,
+        fabricWeight: data.fabricWeight
+      };
+    });
+
+    return { fabricPercentages, fabricWeights, totalFabricWeight };
+  };
+
+  const { fabricPercentages } = calculateFabricBasedPercentages();
 
   // Load scenarios from localStorage on mount
   useEffect(() => {
@@ -563,26 +606,22 @@ export default function OrderConfigurator() {
     const colour = colours.find(c => c.id === colourId);
     if (!colour) return;
 
-    // Calculate total percentage for normalization
-    const totalPercentage = Object.values(productPercentages).reduce((sum, pct) => sum + pct, 0);
-    
-    // Calculate fabric per percentage point
-    const fabricPerPercent = totalFabricMeters / totalPercentage;
-    
-    // Calculate quantities for each product based on percentages
+    // Calculate quantities for each product based on fabric-based percentages
     const calculatedOrders = {};
     const breakdown = {
       sets: {},
       individualItems: {},
-      totalFabric: 0
+      totalFabric: 0,
+      materialRequirements: {}
     };
 
     // Process bedding sets first
     fabricProducts.filter(p => p.category === 'sets').forEach(set => {
-      const percentage = productPercentages[set.id] || 0;
-      if (percentage > 0) {
-        const fabricForSet = fabricPerPercent * percentage;
-        const fabricPerSet = calculateFabric(set.width, set.length, set.type, set.pillowSize, set.pillowCount);
+      const fabricPctData = fabricPercentages[set.id];
+      if (fabricPctData && fabricPctData.fabricPercentage > 0) {
+        // Calculate fabric allocation based on fabric percentage
+        const fabricForSet = (totalFabricMeters * fabricPctData.fabricPercentage) / 100;
+        const fabricPerSet = fabricPctData.fabricPerUnit;
         const quantity = Math.round(fabricForSet / fabricPerSet);
         
         if (quantity > 0) {
@@ -591,9 +630,16 @@ export default function OrderConfigurator() {
             quantity,
             fabricPerSet,
             totalFabric: quantity * fabricPerSet,
-            percentage
+            fabricPercentage: fabricPctData.fabricPercentage,
+            unitPercentage: fabricPctData.unitPercentage
           };
           breakdown.totalFabric += quantity * fabricPerSet;
+          breakdown.materialRequirements[set.id] = {
+            item: `${set.item} ${set.width}×${set.length} + ${set.pillowSize}`,
+            fabricPerUnit: fabricPerSet,
+            unitPercentage: fabricPctData.unitPercentage,
+            fabricPercentage: fabricPctData.fabricPercentage
+          };
 
           // Break down set into individual components
           set.components.forEach(componentId => {
@@ -608,12 +654,13 @@ export default function OrderConfigurator() {
 
     // Process individual pillowcases (Kissenbezug)
     ['pc-40-80', 'pc-80-80'].forEach(pcId => {
-      const percentage = productPercentages[pcId] || 0;
-      if (percentage > 0) {
+      const fabricPctData = fabricPercentages[pcId];
+      if (fabricPctData && fabricPctData.fabricPercentage > 0) {
         const product = fabricProducts.find(p => p.id === pcId);
         if (product) {
-          const fabricForItem = fabricPerPercent * percentage;
-          const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+          // Calculate fabric allocation based on fabric percentage
+          const fabricForItem = (totalFabricMeters * fabricPctData.fabricPercentage) / 100;
+          const fabricPerUnit = fabricPctData.fabricPerUnit;
           const quantity = Math.round(fabricForItem / fabricPerUnit);
           
           if (quantity > 0) {
@@ -623,11 +670,18 @@ export default function OrderConfigurator() {
               quantity: calculatedOrders[pcId],
               fabricPerUnit,
               totalFabric: calculatedOrders[pcId] * fabricPerUnit,
-              percentage,
+              fabricPercentage: fabricPctData.fabricPercentage,
+              unitPercentage: fabricPctData.unitPercentage,
               fromSets: calculatedOrders[pcId] - quantity,
               individual: quantity
             };
             breakdown.totalFabric += quantity * fabricPerUnit;
+            breakdown.materialRequirements[pcId] = {
+              item: `${product.item} ${product.width}×${product.length}`,
+              fabricPerUnit: fabricPerUnit,
+              unitPercentage: fabricPctData.unitPercentage,
+              fabricPercentage: fabricPctData.fabricPercentage
+            };
           }
         }
       }
@@ -635,12 +689,13 @@ export default function OrderConfigurator() {
 
     // Process fitted sheets
     ['fs-90-200', 'fs-100-200', 'fs-120-200', 'fs-140-200', 'fs-160-200', 'fs-180-200', 'fs-200-200', 'fs-200-220'].forEach(fsId => {
-      const percentage = productPercentages[fsId] || 0;
-      if (percentage > 0) {
+      const fabricPctData = fabricPercentages[fsId];
+      if (fabricPctData && fabricPctData.fabricPercentage > 0) {
         const product = fabricProducts.find(p => p.id === fsId);
         if (product) {
-          const fabricForItem = fabricPerPercent * percentage;
-          const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+          // Calculate fabric allocation based on fabric percentage
+          const fabricForItem = (totalFabricMeters * fabricPctData.fabricPercentage) / 100;
+          const fabricPerUnit = fabricPctData.fabricPerUnit;
           const quantity = Math.round(fabricForItem / fabricPerUnit);
           
           if (quantity > 0) {
@@ -649,9 +704,16 @@ export default function OrderConfigurator() {
               quantity,
               fabricPerUnit,
               totalFabric: quantity * fabricPerUnit,
-              percentage
+              fabricPercentage: fabricPctData.fabricPercentage,
+              unitPercentage: fabricPctData.unitPercentage
             };
             breakdown.totalFabric += quantity * fabricPerUnit;
+            breakdown.materialRequirements[fsId] = {
+              item: `${product.item} ${product.width}×${product.length}`,
+              fabricPerUnit: fabricPerUnit,
+              unitPercentage: fabricPctData.unitPercentage,
+              fabricPercentage: fabricPctData.fabricPercentage
+            };
           }
         }
       }
@@ -1141,6 +1203,43 @@ export default function OrderConfigurator() {
                   </div>
                 </div>
 
+                {/* Material Requirements Section */}
+                {Object.keys(percentageResult.breakdown.materialRequirements || {}).length > 0 && (
+                  <div className="mb-4 bg-indigo-50 p-3 rounded border border-indigo-200">
+                    <h3 className="font-semibold text-indigo-900 mb-2 text-sm">Material Requirements & Percentages</h3>
+                    <div className="text-xs text-indigo-800 mb-2">
+                      Percentages are calculated based on fabric needed per item (not units). Items requiring more fabric get a higher percentage of total fabric.
+                    </div>
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      {Object.entries(percentageResult.breakdown.materialRequirements)
+                        .sort(([, a], [, b]) => b.fabricPercentage - a.fabricPercentage)
+                        .map(([productId, req]) => (
+                          <div key={productId} className="p-2 bg-white rounded border border-indigo-200 text-xs">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <span className="font-medium">{req.item}</span>
+                              </div>
+                              <div className="text-right grid grid-cols-3 gap-2">
+                                <div>
+                                  <div className="text-slate-500">Fabric/unit</div>
+                                  <div className="font-bold">{req.fabricPerUnit.toFixed(2)}m</div>
+                                </div>
+                                <div>
+                                  <div className="text-slate-500">Unit %</div>
+                                  <div className="font-bold">{req.unitPercentage}%</div>
+                                </div>
+                                <div>
+                                  <div className="text-slate-500">Fabric %</div>
+                                  <div className="font-bold text-indigo-700">{req.fabricPercentage.toFixed(1)}%</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   {/* Bedding Sets Breakdown */}
                   {Object.keys(percentageResult.breakdown.sets).length > 0 && (
@@ -1154,7 +1253,9 @@ export default function OrderConfigurator() {
                               <div className="flex items-center justify-between">
                                 <div>
                                   <span className="font-medium">{set?.item} {set?.width}×{set?.length} + {set?.pillowSize}</span>
-                                  <span className="text-slate-600 ml-2">({data.percentage}%)</span>
+                                  <div className="text-slate-600 mt-0.5">
+                                    Unit: {data.unitPercentage}% • Fabric: {data.fabricPercentage.toFixed(1)}%
+                                  </div>
                                 </div>
                                 <div className="text-right">
                                   <div className="font-bold">{data.quantity} sets</div>
@@ -1194,8 +1295,10 @@ export default function OrderConfigurator() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
                                     <span className="font-medium">{product?.item} {product?.width}×{product?.length}</span>
-                                    {data.percentage !== null && (
-                                      <span className="text-slate-600 ml-2">({data.percentage}%)</span>
+                                    {data.fabricPercentage !== undefined && (
+                                      <div className="text-slate-600 mt-0.5 text-xs">
+                                        Unit: {data.unitPercentage}% • Fabric: {data.fabricPercentage.toFixed(1)}%
+                                      </div>
                                     )}
                                     {data.fromSets !== undefined && data.fromSets > 0 && (
                                       <div className="text-xs text-slate-500 mt-0.5">
