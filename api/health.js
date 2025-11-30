@@ -1,5 +1,11 @@
 // Health check endpoint
-const { createClient } = require('@supabase/supabase-js');
+// This file must use CommonJS (require) for Vercel serverless functions
+let createClient;
+try {
+  createClient = require('@supabase/supabase-js').createClient;
+} catch (error) {
+  console.error('Failed to load @supabase/supabase-js:', error);
+}
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;

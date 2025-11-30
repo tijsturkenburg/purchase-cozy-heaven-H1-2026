@@ -1,5 +1,12 @@
 // Vercel Serverless Function for scenarios API
-const { createClient } = require('@supabase/supabase-js');
+// This file must use CommonJS (require) for Vercel serverless functions
+let createClient;
+try {
+  createClient = require('@supabase/supabase-js').createClient;
+} catch (error) {
+  console.error('Failed to load @supabase/supabase-js:', error);
+  throw error;
+}
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -13,7 +20,12 @@ function getSupabaseClient() {
     return null;
   }
 
-  return createClient(supabaseUrl, supabaseKey);
+  try {
+    return createClient(supabaseUrl, supabaseKey);
+  } catch (error) {
+    console.error('Failed to create Supabase client:', error);
+    return null;
+  }
 }
 
 module.exports = async function handler(req, res) {

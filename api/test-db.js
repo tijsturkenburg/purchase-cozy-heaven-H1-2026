@@ -1,5 +1,11 @@
 // Test database connection endpoint
-const { createClient } = require('@supabase/supabase-js');
+// This file must use CommonJS (require) for Vercel serverless functions
+let createClient;
+try {
+  createClient = require('@supabase/supabase-js').createClient;
+} catch (error) {
+  console.error('Failed to load @supabase/supabase-js:', error);
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
