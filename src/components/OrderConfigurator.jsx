@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles, Menu, Settings } from 'lucide-react';
 
 export default function OrderConfigurator() {
@@ -134,48 +134,6 @@ export default function OrderConfigurator() {
     'fs-90-200': 7
   };
 
-  // Calculate fabric-based percentages (percentage of total fabric needed)
-  // This converts unit percentages to fabric percentages based on material requirements per item
-  const calculateFabricBasedPercentages = () => {
-    const fabricWeights = {};
-    let totalFabricWeight = 0;
-
-    // Calculate fabric weight for each product (unit_percentage * fabric_per_unit)
-    Object.entries(unitPercentages).forEach(([productId, unitPct]) => {
-      const product = fabricProducts.find(p => p.id === productId);
-      if (product) {
-        const fabricPerUnit = calculateFabric(
-          product.width, 
-          product.length, 
-          product.type, 
-          product.pillowSize, 
-          product.pillowCount
-        );
-        const fabricWeight = unitPct * fabricPerUnit;
-        fabricWeights[productId] = {
-          unitPercentage: unitPct,
-          fabricPerUnit: fabricPerUnit,
-          fabricWeight: fabricWeight
-        };
-        totalFabricWeight += fabricWeight;
-      }
-    });
-
-    // Normalize to get fabric-based percentages (percentage of total fabric)
-    const fabricPercentages = {};
-    Object.entries(fabricWeights).forEach(([productId, data]) => {
-      fabricPercentages[productId] = {
-        fabricPercentage: (data.fabricWeight / totalFabricWeight) * 100,
-        unitPercentage: data.unitPercentage,
-        fabricPerUnit: data.fabricPerUnit,
-        fabricWeight: data.fabricWeight
-      };
-    });
-
-    return { fabricPercentages, fabricWeights, totalFabricWeight };
-  };
-
-  const { fabricPercentages } = calculateFabricBasedPercentages();
 
   // Load scenarios from localStorage on mount
   useEffect(() => {
@@ -277,6 +235,47 @@ export default function OrderConfigurator() {
       return parseFloat((pieceLength * 2).toFixed(2));
     }
   };
+
+  // Calculate fabric-based percentages (percentage of total fabric needed)
+  // This converts unit percentages to fabric percentages based on material requirements per item
+  const fabricPercentages = useMemo(() => {
+    const fabricWeights = {};
+    let totalFabricWeight = 0;
+
+    // Calculate fabric weight for each product (unit_percentage * fabric_per_unit)
+    Object.entries(unitPercentages).forEach(([productId, unitPct]) => {
+      const product = fabricProducts.find(p => p.id === productId);
+      if (product) {
+        const fabricPerUnit = calculateFabric(
+          product.width, 
+          product.length, 
+          product.type, 
+          product.pillowSize, 
+          product.pillowCount
+        );
+        const fabricWeight = unitPct * fabricPerUnit;
+        fabricWeights[productId] = {
+          unitPercentage: unitPct,
+          fabricPerUnit: fabricPerUnit,
+          fabricWeight: fabricWeight
+        };
+        totalFabricWeight += fabricWeight;
+      }
+    });
+
+    // Normalize to get fabric-based percentages (percentage of total fabric)
+    const percentages = {};
+    Object.entries(fabricWeights).forEach(([productId, data]) => {
+      percentages[productId] = {
+        fabricPercentage: totalFabricWeight > 0 ? (data.fabricWeight / totalFabricWeight) * 100 : 0,
+        unitPercentage: data.unitPercentage,
+        fabricPerUnit: data.fabricPerUnit,
+        fabricWeight: data.fabricWeight
+      };
+    });
+
+    return percentages;
+  }, []); // Empty dependency array since fabricProducts and unitPercentages are constants
 
   const updateQuantity = (colourId, productId, change) => {
     setColours(colours.map(colour => {
