@@ -111,18 +111,6 @@ Railway supports Node.js apps with persistent storage for SQLite databases.
 5. Railway will automatically detect Node.js and deploy
 6. The database will be created automatically in Railway's persistent storage
 
-### Render
-
-1. Go to [render.com](https://render.com) and sign up/login
-2. Create a new "Web Service"
-3. Connect your GitHub repository
-4. Set:
-   - **Build Command**: `npm run build`
-   - **Start Command**: `npm start`
-   - **Environment**: Node
-5. Add a persistent disk for database storage
-6. Deploy
-
 ### Local Production Build
 
 ```bash
@@ -134,5 +122,5 @@ The production build will be in the `dist/` directory, and the server will run o
 
 ### Database
 
-The SQLite database is automatically created in the `data/` directory on first run. In production (Railway/Render), the database persists in the platform's storage.
+The SQLite database is automatically created in the `data/` directory on first run. In production (Railway), the database persists in Railway's persistent storage.
 
