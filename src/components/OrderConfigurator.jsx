@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X } from 'lucide-react';
 
 export default function OrderConfigurator() {
   const [fabricWidth] = useState(240);
@@ -49,7 +49,7 @@ export default function OrderConfigurator() {
       components: ['dc-240-220', 'pc-80-80', 'pc-80-80'] }
   ];
 
-  const [colours, setColours] = useState([
+  const initialColours = [
     { 
       id: 1, 
       name: 'Stone Grey', 
@@ -88,7 +88,51 @@ export default function OrderConfigurator() {
         'fs-90-200': 90
       }
     }
-  ]);
+  ];
+
+  const [colours, setColours] = useState(initialColours);
+  const [scenarios, setScenarios] = useState([]);
+  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [showScenarioInput, setShowScenarioInput] = useState(false);
+  const [showLoadDropdown, setShowLoadDropdown] = useState(false);
+  const [scenarioName, setScenarioName] = useState('');
+
+  // Load scenarios from localStorage on mount
+  useEffect(() => {
+    const savedScenarios = localStorage.getItem('orderScenarios');
+    if (savedScenarios) {
+      try {
+        setScenarios(JSON.parse(savedScenarios));
+      } catch (e) {
+        console.error('Error loading scenarios:', e);
+      }
+    }
+  }, []);
+
+  // Save scenarios to localStorage whenever scenarios change
+  useEffect(() => {
+    if (scenarios.length > 0) {
+      localStorage.setItem('orderScenarios', JSON.stringify(scenarios));
+    }
+  }, [scenarios]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showScenarioInput || showLoadDropdown) {
+        const target = event.target;
+        if (!target.closest('.scenario-dropdown')) {
+          setShowScenarioInput(false);
+          setShowLoadDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showScenarioInput, showLoadDropdown]);
 
   const calculateFabric = (width, length, type, pillowSize, pillowCount) => {
     // For bedding sets, calculate duvet cover + pillowcases
@@ -244,6 +288,59 @@ export default function OrderConfigurator() {
     setColours(colours.map(c => c.id === colourId ? { ...c, name: newName } : c));
   };
 
+  const clearAllNumbers = () => {
+    if (window.confirm('Are you sure you want to clear all quantities? This cannot be undone.')) {
+      setColours(colours.map(colour => ({
+        ...colour,
+        orders: {}
+      })));
+    }
+  };
+
+  const saveScenario = () => {
+    if (!scenarioName.trim()) {
+      alert('Please enter a scenario name');
+      return;
+    }
+
+    const newScenario = {
+      id: Date.now(),
+      name: scenarioName.trim(),
+      colours: JSON.parse(JSON.stringify(colours)), // Deep copy
+      savedAt: new Date().toISOString()
+    };
+
+    const updatedScenarios = [...scenarios, newScenario];
+    setScenarios(updatedScenarios);
+    localStorage.setItem('orderScenarios', JSON.stringify(updatedScenarios));
+    setScenarioName('');
+    setShowScenarioInput(false);
+    alert(`Scenario "${newScenario.name}" saved successfully!`);
+  };
+
+  const loadScenario = (scenarioId) => {
+    const scenario = scenarios.find(s => s.id === scenarioId);
+    if (scenario) {
+      if (window.confirm(`Load scenario "${scenario.name}"? This will replace your current order.`)) {
+        setColours(JSON.parse(JSON.stringify(scenario.colours))); // Deep copy
+        setSelectedScenario(scenarioId);
+      }
+    }
+  };
+
+  const deleteScenario = (scenarioId, e) => {
+    e.stopPropagation();
+    const scenario = scenarios.find(s => s.id === scenarioId);
+    if (scenario && window.confirm(`Delete scenario "${scenario.name}"?`)) {
+      const updatedScenarios = scenarios.filter(s => s.id !== scenarioId);
+      setScenarios(updatedScenarios);
+      localStorage.setItem('orderScenarios', JSON.stringify(updatedScenarios));
+      if (selectedScenario === scenarioId) {
+        setSelectedScenario(null);
+      }
+    }
+  };
+
   return (
     <div className="w-full max-w-[95vw] mx-auto p-2 bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="bg-white rounded-lg shadow-lg p-3">
@@ -255,12 +352,114 @@ export default function OrderConfigurator() {
               <p className="text-slate-600 text-xs">MOQ: {moq.toLocaleString()}m per colour</p>
             </div>
           </div>
-          <button
-            onClick={addColour}
-            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-          >
-            + Add colour
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={clearAllNumbers}
+              className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center gap-1"
+              title="Clear all quantities"
+            >
+              <X className="w-4 h-4" />
+              Clear All
+            </button>
+            <div className="relative scenario-dropdown">
+              <button
+                onClick={() => {
+                  setShowScenarioInput(!showScenarioInput);
+                  setShowLoadDropdown(false);
+                }}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm flex items-center gap-1"
+                title="Save current scenario"
+              >
+                <Save className="w-4 h-4" />
+                Save Scenario
+              </button>
+              {showScenarioInput && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg p-2 z-20 min-w-[250px] scenario-dropdown">
+                  <input
+                    type="text"
+                    value={scenarioName}
+                    onChange={(e) => setScenarioName(e.target.value)}
+                    placeholder="Enter scenario name"
+                    className="w-full px-2 py-1 border border-slate-300 rounded text-sm mb-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    onKeyPress={(e) => e.key === 'Enter' && saveScenario()}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveScenario}
+                      className="flex-1 px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowScenarioInput(false);
+                        setScenarioName('');
+                      }}
+                      className="flex-1 px-2 py-1 bg-slate-300 text-slate-700 rounded text-xs hover:bg-slate-400"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {scenarios.length > 0 && (
+              <div className="relative scenario-dropdown">
+                <button
+                  onClick={() => {
+                    setShowLoadDropdown(!showLoadDropdown);
+                    setShowScenarioInput(false);
+                  }}
+                  className="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm flex items-center gap-1"
+                  title="Load saved scenario"
+                >
+                  <FolderOpen className="w-4 h-4" />
+                  Load Scenario
+                </button>
+                {showLoadDropdown && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg z-20 min-w-[250px] max-h-[300px] overflow-y-auto scenario-dropdown">
+                    {scenarios.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-slate-500">No saved scenarios</div>
+                    ) : (
+                      scenarios.map((scenario) => (
+                        <div
+                          key={scenario.id}
+                          onClick={() => {
+                            loadScenario(scenario.id);
+                            setShowLoadDropdown(false);
+                          }}
+                          className={`px-3 py-2 hover:bg-slate-100 cursor-pointer flex items-center justify-between ${
+                            selectedScenario === scenario.id ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-slate-800">{scenario.name}</div>
+                            <div className="text-xs text-slate-500">
+                              {new Date(scenario.savedAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => deleteScenario(scenario.id, e)}
+                            className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                            title="Delete scenario"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              onClick={addColour}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              + Add colour
+            </button>
+          </div>
         </div>
 
         {/* Colour Status Overview */}

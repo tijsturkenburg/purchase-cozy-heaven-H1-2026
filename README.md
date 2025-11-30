@@ -78,3 +78,64 @@ The development server runs on port 3000 by default with Vite's fast HMR (Hot Mo
 - **Tailwind CSS** - Utility-first CSS framework
 - **Lucide React** - Icon library
 
+## Deployment
+
+### Deploy to Vercel (Recommended)
+
+1. **Install Vercel CLI** (if not already installed):
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Deploy**:
+   ```bash
+   vercel
+   ```
+   
+   Follow the prompts to link your project and deploy.
+
+3. **Or deploy via GitHub**:
+   - Push your code to GitHub
+   - Go to [vercel.com](https://vercel.com)
+   - Click "New Project"
+   - Import your GitHub repository
+   - Vercel will automatically detect Vite and deploy
+
+### Deploy to Netlify
+
+1. **Install Netlify CLI**:
+   ```bash
+   npm i -g netlify-cli
+   ```
+
+2. **Build and deploy**:
+   ```bash
+   npm run build
+   netlify deploy --prod --dir=dist
+   ```
+
+### Deploy to GitHub Pages
+
+1. **Install gh-pages**:
+   ```bash
+   npm install --save-dev gh-pages
+   ```
+
+2. **Add to package.json scripts**:
+   ```json
+   "deploy": "npm run build && gh-pages -d dist"
+   ```
+
+3. **Deploy**:
+   ```bash
+   npm run deploy
+   ```
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+The production build will be in the `dist/` directory, ready to be deployed to any static hosting service.
+
