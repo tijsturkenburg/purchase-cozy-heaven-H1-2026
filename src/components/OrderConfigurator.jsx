@@ -1,0 +1,764 @@
+import React, { useState } from 'react';
+import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle } from 'lucide-react';
+
+export default function OrderConfigurator() {
+  const [fabricWidth] = useState(240);
+  const [moq] = useState(2000);
+  
+  const fabricProducts = [
+    // Individual Duvet Covers
+    { id: 'dc-135-200', item: 'Duvet cover', width: 135, length: 200, type: 'cover', category: 'individual', sku: '' },
+    { id: 'dc-155-220', item: 'Duvet cover', width: 155, length: 220, type: 'cover', category: 'individual', sku: '' },
+    { id: 'dc-200-200', item: 'Duvet cover', width: 200, length: 200, type: 'cover', category: 'individual', sku: '' },
+    { id: 'dc-200-220', item: 'Duvet cover', width: 200, length: 220, type: 'cover', category: 'individual', sku: '' },
+    { id: 'dc-240-220', item: 'Duvet cover', width: 240, length: 220, type: 'cover', category: 'individual', sku: '' },
+    
+    // Individual Pillowcases
+    { id: 'pc-40-80', item: 'Pillowcase', width: 40, length: 80, type: 'pillowcase', category: 'individual', sku: 'CH020214' },
+    { id: 'pc-80-80', item: 'Pillowcase', width: 80, length: 80, type: 'pillowcase', category: 'individual', sku: 'CH020314' },
+    
+    // Individual Fitted Sheets
+    { id: 'fs-90-200', item: 'Fitted sheet', width: 90, length: 200, type: 'sheet', category: 'individual', sku: 'CH031514' },
+    { id: 'fs-100-200', item: 'Fitted sheet', width: 100, length: 200, type: 'sheet', category: 'individual', sku: 'CH313414' },
+    { id: 'fs-140-200', item: 'Fitted sheet', width: 140, length: 200, type: 'sheet', category: 'individual', sku: 'CH031614' },
+    { id: 'fs-160-200', item: 'Fitted sheet', width: 160, length: 200, type: 'sheet', category: 'individual', sku: 'CH031714' },
+    { id: 'fs-180-200', item: 'Fitted sheet', width: 180, length: 200, type: 'sheet', category: 'individual', sku: 'CH031414' },
+    { id: 'fs-200-200', item: 'Fitted sheet', width: 200, length: 200, type: 'sheet', category: 'individual', sku: 'CH030114' },
+    { id: 'fs-200-220', item: 'Fitted sheet', width: 200, length: 220, type: 'sheet', category: 'individual', sku: 'CH031814' },
+    
+    // Bedding Sets (bundles)
+    { id: 'set-135-200-40-80', item: 'Bedding set', width: 135, length: 200, pillowSize: '40×80', pillowCount: 1, type: 'set', category: 'sets', sku: 'CH040814', 
+      components: ['dc-135-200', 'pc-40-80'] },
+    { id: 'set-135-200-80-80', item: 'Bedding set', width: 135, length: 200, pillowSize: '80×80', pillowCount: 1, type: 'set', category: 'sets', sku: 'CH040714',
+      components: ['dc-135-200', 'pc-80-80'] },
+    { id: 'set-155-220-40-80', item: 'Bedding set', width: 155, length: 220, pillowSize: '40×80', pillowCount: 1, type: 'set', category: 'sets', sku: 'CH041214',
+      components: ['dc-155-220', 'pc-40-80'] },
+    { id: 'set-155-220-80-80', item: 'Bedding set', width: 155, length: 220, pillowSize: '80×80', pillowCount: 1, type: 'set', category: 'sets', sku: 'CH041114',
+      components: ['dc-155-220', 'pc-80-80'] },
+    { id: 'set-200-200-40-80-2x', item: 'Bedding set', width: 200, length: 200, pillowSize: '40×80', pillowCount: 2, type: 'set', category: 'sets', sku: 'CH040514',
+      components: ['dc-200-200', 'pc-40-80', 'pc-40-80'] },
+    { id: 'set-200-200-80-80-2x', item: 'Bedding set', width: 200, length: 200, pillowSize: '80×80', pillowCount: 2, type: 'set', category: 'sets', sku: 'CH040614',
+      components: ['dc-200-200', 'pc-80-80', 'pc-80-80'] },
+    { id: 'set-200-220-40-80-2x', item: 'Bedding set', width: 200, length: 220, pillowSize: '40×80', pillowCount: 2, type: 'set', category: 'sets', sku: 'CH041014',
+      components: ['dc-200-220', 'pc-40-80', 'pc-40-80'] },
+    { id: 'set-200-220-80-80-2x', item: 'Bedding set', width: 200, length: 220, pillowSize: '80×80', pillowCount: 2, type: 'set', category: 'sets', sku: 'CH040914',
+      components: ['dc-200-220', 'pc-80-80', 'pc-80-80'] },
+    { id: 'set-240-220-40-80-2x', item: 'Bedding set', width: 240, length: 220, pillowSize: '40×80', pillowCount: 2, type: 'set', category: 'sets', sku: 'CH043314',
+      components: ['dc-240-220', 'pc-40-80', 'pc-40-80'] },
+    { id: 'set-240-220-80-80-2x', item: 'Bedding set', width: 240, length: 220, pillowSize: '80×80', pillowCount: 2, type: 'set', category: 'sets', sku: 'CH043214',
+      components: ['dc-240-220', 'pc-80-80', 'pc-80-80'] }
+  ];
+
+  const [colours, setColours] = useState([
+    { 
+      id: 1, 
+      name: 'Stone Grey', 
+      orders: {
+        // Bedding sets (Bettwäsche)
+        'set-135-200-40-80': 190,
+        'set-135-200-80-80': 256,
+        'set-155-220-40-80': 62,
+        'set-155-220-80-80': 65,
+        'set-200-200-40-80-2x': 6,
+        'set-200-200-80-80-2x': 23,
+        'set-200-220-40-80-2x': 3,
+        'set-200-220-80-80-2x': 15,
+        'set-240-220-40-80-2x': 4,
+        'set-240-220-80-80-2x': 7,
+        
+        // Individual duvet covers (auto-added from sets above)
+        'dc-135-200': 190 + 256,  // from both 135x200 sets
+        'dc-155-220': 62 + 65,    // from both 155x220 sets
+        'dc-200-200': 6 + 23,     // from both 200x200 sets
+        'dc-200-220': 3 + 15,     // from both 200x220 sets
+        'dc-240-220': 4 + 7,      // from both 240x220 sets
+        
+        // Individual pillowcases (Kissenbezug)
+        // Base quantities from screenshot, plus auto-added from sets
+        'pc-40-80': 74 + 190 + 62 + (6*2) + (3*2) + (4*2),  // 74 individual + sets
+        'pc-80-80': 31 + 256 + 65 + (23*2) + (15*2) + (7*2), // 31 individual + sets
+        
+        // Fitted sheets (Spannbettlaken)
+        'fs-100-200': 68,
+        'fs-140-200': 57,
+        'fs-160-200': 36,
+        'fs-180-200': 89,
+        'fs-200-200': 61,
+        'fs-200-220': 31,
+        'fs-90-200': 90
+      }
+    }
+  ]);
+
+  const calculateFabric = (width, length, type, pillowSize, pillowCount) => {
+    // For bedding sets, calculate duvet cover + pillowcases
+    if (type === 'set') {
+      const duvetFabric = calculateSingleItem(width, length, 'cover');
+      
+      // Parse pillow size (e.g., "40×80" -> width: 40, length: 80)
+      const [pillowWidth, pillowLength] = pillowSize.split('×').map(Number);
+      const pillowFabric = calculateSingleItem(pillowWidth, pillowLength, 'pillowcase');
+      
+      return duvetFabric + (pillowFabric * pillowCount);
+    }
+    
+    return calculateSingleItem(width, length, type);
+  };
+
+  const calculateSingleItem = (width, length, type) => {
+    const isPillow = type === 'pillowcase';
+    const isSheet = type === 'sheet';
+    const pieces = isSheet ? 1 : 2;
+    const flapAllowance = isPillow ? 0.25 : 0;
+    const seamAllowance = 0.04;
+    const elasticExtra = isSheet ? 0.20 : 0;
+    
+    const pieceWidth = width / 100 + seamAllowance;
+    const pieceLength = length / 100 + seamAllowance + flapAllowance + elasticExtra;
+    
+    const fabricWidthM = fabricWidth / 100;
+    const piecesAcrossWidth = Math.floor(fabricWidthM / pieceWidth);
+    
+    if (piecesAcrossWidth >= pieces) {
+      return parseFloat(pieceLength.toFixed(2));
+    } else if (piecesAcrossWidth === 1) {
+      return parseFloat((pieces * pieceLength).toFixed(2));
+    } else {
+      return parseFloat((pieceLength * 2).toFixed(2));
+    }
+  };
+
+  const updateQuantity = (colourId, productId, change) => {
+    setColours(colours.map(colour => {
+      if (colour.id === colourId) {
+        const product = fabricProducts.find(p => p.id === productId);
+        const newOrders = { ...colour.orders };
+        
+        // If it's a set, update the set quantity AND its components
+        if (product.type === 'set') {
+          const currentSetQty = newOrders[productId] || 0;
+          const newSetQty = Math.max(0, currentSetQty + change);
+          
+          if (newSetQty === 0) {
+            delete newOrders[productId];
+          } else {
+            newOrders[productId] = newSetQty;
+          }
+          
+          // Update individual components
+          product.components.forEach(componentId => {
+            const currentComponentQty = newOrders[componentId] || 0;
+            const newComponentQty = Math.max(0, currentComponentQty + change);
+            
+            if (newComponentQty === 0) {
+              delete newOrders[componentId];
+            } else {
+              newOrders[componentId] = newComponentQty;
+            }
+          });
+        } else {
+          // If it's an individual item, just update that item
+          const currentQty = newOrders[productId] || 0;
+          const newQty = Math.max(0, currentQty + change);
+          
+          if (newQty === 0) {
+            delete newOrders[productId];
+          } else {
+            newOrders[productId] = newQty;
+          }
+        }
+        
+        return { ...colour, orders: newOrders };
+      }
+      return colour;
+    }));
+  };
+
+  const setQuantity = (colourId, productId, value) => {
+    const qty = parseInt(value) || 0;
+    setColours(colours.map(colour => {
+      if (colour.id === colourId) {
+        const product = fabricProducts.find(p => p.id === productId);
+        const newOrders = { ...colour.orders };
+        
+        // If it's a set, set the quantity for the set AND its components
+        if (product.type === 'set') {
+          if (qty === 0) {
+            delete newOrders[productId];
+          } else {
+            newOrders[productId] = qty;
+          }
+          
+          // Set individual components to match
+          const oldSetQty = colour.orders[productId] || 0;
+          const change = qty - oldSetQty;
+          
+          product.components.forEach(componentId => {
+            const currentComponentQty = newOrders[componentId] || 0;
+            const newComponentQty = Math.max(0, currentComponentQty + change);
+            
+            if (newComponentQty === 0) {
+              delete newOrders[componentId];
+            } else {
+              newOrders[componentId] = newComponentQty;
+            }
+          });
+        } else {
+          // If it's an individual item, just set that item
+          if (qty === 0) {
+            delete newOrders[productId];
+          } else {
+            newOrders[productId] = qty;
+          }
+        }
+        
+        return { ...colour, orders: newOrders };
+      }
+      return colour;
+    }));
+  };
+
+  const calculateColourTotal = (colour) => {
+    let total = 0;
+    Object.entries(colour.orders).forEach(([productId, qty]) => {
+      const product = fabricProducts.find(p => p.id === productId);
+      // Only count individual items, not sets (to avoid double counting)
+      if (product && product.category === 'individual') {
+        const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+        total += fabricPerUnit * qty;
+      }
+    });
+    return total;
+  };
+
+  const addColour = () => {
+    const newId = Math.max(...colours.map(c => c.id)) + 1;
+    setColours([...colours, { id: newId, name: `Colour ${newId}`, orders: {} }]);
+  };
+
+  const removeColour = (colourId) => {
+    setColours(colours.filter(c => c.id !== colourId));
+  };
+
+  const updateColourName = (colourId, newName) => {
+    setColours(colours.map(c => c.id === colourId ? { ...c, name: newName } : c));
+  };
+
+  return (
+    <div className="w-full max-w-[95vw] mx-auto p-2 bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="bg-white rounded-lg shadow-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <ShoppingCart className="w-6 h-6 text-blue-600" />
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">Order configurator</h1>
+              <p className="text-slate-600 text-xs">MOQ: {moq.toLocaleString()}m per colour</p>
+            </div>
+          </div>
+          <button
+            onClick={addColour}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          >
+            + Add colour
+          </button>
+        </div>
+
+        {/* Colour Status Overview */}
+        <div className="mb-2 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+          {colours.map((colour) => {
+            const total = calculateColourTotal(colour);
+            const meetsMOQ = total >= moq;
+            const percentage = (total / moq) * 100;
+
+            return (
+              <div
+                key={colour.id}
+                className={`p-2 rounded-lg border-2 ${
+                  meetsMOQ ? 'border-green-500 bg-green-50' : 'border-amber-500 bg-amber-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <input
+                    type="text"
+                    value={colour.name}
+                    onChange={(e) => updateColourName(colour.id, e.target.value)}
+                    className="px-1.5 py-0.5 border border-slate-300 rounded font-medium text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                  {colours.length > 1 && (
+                    <button
+                      onClick={() => removeColour(colour.id)}
+                      className="ml-1 p-0.5 text-red-600 hover:bg-red-100 rounded transition-colors text-sm"
+                      title="Remove colour"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                
+                <div className="mb-1">
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        meetsMOQ ? 'bg-green-600' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${Math.min(100, percentage)}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="text-xs space-y-0.5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Total:</span>
+                    <span className="font-bold text-slate-800">{total.toFixed(0)}m</span>
+                  </div>
+                  {!meetsMOQ && (
+                    <div className="text-amber-700 font-medium text-xs">
+                      Need {(moq - total).toFixed(0)}m
+                    </div>
+                  )}
+                  {meetsMOQ && (
+                    <div className="flex items-center gap-0.5 text-green-700 font-medium text-xs">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>MOQ met</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Products Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-slate-800 text-white">
+                <th className="px-2 py-1.5 text-left sticky left-0 bg-slate-800 z-10 min-w-[140px] text-xs font-semibold">Product</th>
+                <th className="px-2 py-1.5 text-left text-xs font-semibold">SKU</th>
+                <th className="px-2 py-1.5 text-left text-xs font-semibold">Details</th>
+                <th className="px-2 py-1.5 text-right text-xs font-semibold">Fabric/unit</th>
+                {colours.map((colour) => (
+                  <th key={colour.id} className="px-2 py-1.5 text-center min-w-[120px] text-xs font-semibold">
+                    {colour.name}
+                  </th>
+                ))}
+                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold">Total units</th>
+                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold">Total fabric</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Bedding Sets Section */}
+              <tr className="bg-blue-100">
+                <td colSpan={5 + colours.length + 2} className="px-2 py-1 font-bold text-blue-900 text-xs">
+                  BEDDING SETS (1x Duvet cover + Pillowcase(s)) - For tracking only, components added to individual items below
+                </td>
+              </tr>
+              {fabricProducts.filter(p => p.category === 'sets').map((product, idx) => {
+                const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[product.id] || 0), 0);
+                const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+                const pillowText = product.pillowCount > 1 ? `${product.pillowCount}x ` : '1x ';
+                const details = `${product.width}×${product.length} + ${pillowText}${product.pillowSize}`;
+
+                return (
+                  <tr key={product.id} className={`${bgColor} hover:bg-blue-50 transition-colors`}>
+                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
+                      {product.item}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
+                      {product.sku}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs">
+                      {details}
+                    </td>
+                    <td className="px-2 py-1 text-right text-slate-400 italic text-xs">
+                      —
+                    </td>
+                    {colours.map((colour) => {
+                      const qty = colour.orders[product.id] || 0;
+
+                      return (
+                        <td key={colour.id} className="px-2 py-1">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -10)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                              disabled={qty === 0}
+                            >
+                              -10
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -1)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                              disabled={qty === 0}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            
+                            <input
+                              type="number"
+                              min="0"
+                              value={qty || ''}
+                              placeholder="0"
+                              onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
+                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 1)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 10)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
+                            >
+                              +10
+                            </button>
+                          </div>
+                          {qty > 0 && (
+                            <div className="text-xs text-center text-blue-600 mt-0.5 font-medium">
+                              {qty} sets
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
+                      {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
+                    </td>
+                    <td className="px-2 py-1 text-right font-mono text-slate-400 bg-slate-100 italic text-xs">
+                      —
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Individual Duvet Covers Section */}
+              <tr className="bg-green-100">
+                <td colSpan={5 + colours.length + 2} className="px-2 py-0.5 font-bold text-green-900 text-xs">
+                  DUVET COVERS (production quantities - includes sets above)
+                </td>
+              </tr>
+              {fabricProducts.filter(p => p.type === 'cover' && p.category === 'individual').map((product, idx) => {
+                const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+                const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[product.id] || 0), 0);
+                const totalFabric = totalUnits * fabricPerUnit;
+                const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+                return (
+                  <tr key={product.id} className={`${bgColor} hover:bg-green-50 transition-colors`}>
+                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
+                      {product.item}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
+                      {product.sku}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs">
+                      {product.width}×{product.length}
+                    </td>
+                    <td className="px-2 py-1 text-right text-slate-600 text-xs font-mono">
+                      {fabricPerUnit.toFixed(2)}m
+                    </td>
+                    {colours.map((colour) => {
+                      const qty = colour.orders[product.id] || 0;
+                      const subtotal = fabricPerUnit * qty;
+
+                      return (
+                        <td key={colour.id} className="px-2 py-1">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -10)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                              disabled={qty === 0}
+                            >
+                              -10
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -1)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                              disabled={qty === 0}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            
+                            <input
+                              type="number"
+                              min="0"
+                              value={qty || ''}
+                              placeholder="0"
+                              onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
+                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 1)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 10)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
+                            >
+                              +10
+                            </button>
+                          </div>
+                          {qty > 0 && (
+                            <div className="text-xs text-center text-slate-600 mt-0.5 font-mono">
+                              {subtotal.toFixed(1)}m
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
+                      {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
+                    </td>
+                    <td className="px-2 py-1 text-right font-mono font-medium text-blue-600 bg-slate-100 text-xs">
+                      {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Individual Pillowcases Section */}
+              <tr className="bg-purple-100">
+                <td colSpan={5 + colours.length + 2} className="px-2 py-0.5 font-bold text-purple-900 text-xs">
+                  PILLOWCASES (production quantities - includes sets above)
+                </td>
+              </tr>
+              {fabricProducts.filter(p => p.type === 'pillowcase').map((product, idx) => {
+                const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+                const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[product.id] || 0), 0);
+                const totalFabric = totalUnits * fabricPerUnit;
+                const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+                return (
+                  <tr key={product.id} className={`${bgColor} hover:bg-purple-50 transition-colors`}>
+                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
+                      {product.item}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
+                      {product.sku}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs">
+                      {product.width}×{product.length}
+                    </td>
+                    <td className="px-2 py-1 text-right text-slate-600 text-xs font-mono">
+                      {fabricPerUnit.toFixed(2)}m
+                    </td>
+                    {colours.map((colour) => {
+                      const qty = colour.orders[product.id] || 0;
+                      const subtotal = fabricPerUnit * qty;
+
+                      return (
+                        <td key={colour.id} className="px-2 py-1">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -10)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                              disabled={qty === 0}
+                            >
+                              -10
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -1)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                              disabled={qty === 0}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            
+                            <input
+                              type="number"
+                              min="0"
+                              value={qty || ''}
+                              placeholder="0"
+                              onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
+                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 1)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 10)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
+                            >
+                              +10
+                            </button>
+                          </div>
+                          {qty > 0 && (
+                            <div className="text-xs text-center text-slate-600 mt-0.5 font-mono">
+                              {subtotal.toFixed(1)}m
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
+                      {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
+                    </td>
+                    <td className="px-2 py-1 text-right font-mono font-medium text-blue-600 bg-slate-100 text-xs">
+                      {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Fitted Sheets Section */}
+              <tr className="bg-amber-100">
+                <td colSpan={5 + colours.length + 2} className="px-2 py-0.5 font-bold text-amber-900 text-xs">
+                  FITTED SHEETS
+                </td>
+              </tr>
+              {fabricProducts.filter(p => p.type === 'sheet').map((product, idx) => {
+                const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+                const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[product.id] || 0), 0);
+                const totalFabric = totalUnits * fabricPerUnit;
+                const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+                return (
+                  <tr key={product.id} className={`${bgColor} hover:bg-amber-50 transition-colors`}>
+                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
+                      {product.item}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
+                      {product.sku}
+                    </td>
+                    <td className="px-2 py-1 text-slate-600 text-xs">
+                      {product.width}×{product.length}
+                    </td>
+                    <td className="px-2 py-1 text-right text-slate-600 text-xs font-mono">
+                      {fabricPerUnit.toFixed(2)}m
+                    </td>
+                    {colours.map((colour) => {
+                      const qty = colour.orders[product.id] || 0;
+                      const subtotal = fabricPerUnit * qty;
+
+                      return (
+                        <td key={colour.id} className="px-2 py-1">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -10)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                              disabled={qty === 0}
+                            >
+                              -10
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, -1)}
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                              disabled={qty === 0}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            
+                            <input
+                              type="number"
+                              min="0"
+                              value={qty || ''}
+                              placeholder="0"
+                              onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
+                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 1)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => updateQuantity(colour.id, product.id, 10)}
+                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
+                            >
+                              +10
+                            </button>
+                          </div>
+                          {qty > 0 && (
+                            <div className="text-xs text-center text-slate-600 mt-0.5 font-mono">
+                              {subtotal.toFixed(1)}m
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
+                      {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
+                    </td>
+                    <td className="px-2 py-1 text-right font-mono font-medium text-blue-600 bg-slate-100 text-xs">
+                      {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="bg-slate-800 text-white font-bold">
+                <td colSpan="4" className="px-2 py-1.5 text-right text-xs">Total per colour (production fabric):</td>
+                {colours.map((colour) => {
+                  const total = calculateColourTotal(colour);
+                  return (
+                    <td key={colour.id} className="px-2 py-1.5 text-center font-mono text-xs">
+                      {total.toFixed(1)}m
+                    </td>
+                  );
+                })}
+                <td className="px-2 py-1.5 text-right bg-slate-700 text-xs">
+                  {colours.reduce((sum, colour) => {
+                    // Count only individual items (sets are just for tracking)
+                    return sum + Object.entries(colour.orders).reduce((s, [pid, qty]) => {
+                      const product = fabricProducts.find(p => p.id === pid);
+                      return product && product.category === 'individual' ? s + qty : s;
+                    }, 0);
+                  }, 0).toLocaleString()}
+                </td>
+                <td className="px-2 py-1.5 text-right bg-slate-700 font-mono text-xs">
+                  {colours.reduce((sum, c) => sum + calculateColourTotal(c), 0).toFixed(1)}m
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Summary */}
+        <div className="mt-2 p-2 bg-slate-100 rounded-lg">
+          <h3 className="font-bold text-slate-800 mb-1 text-sm">Order summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <div>
+              <div className="text-xs text-slate-600">Total colours</div>
+              <div className="text-lg font-bold text-slate-800">{colours.length}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-600">Colours meeting MOQ</div>
+              <div className="text-lg font-bold text-green-600">
+                {colours.filter(c => calculateColourTotal(c) >= moq).length} / {colours.length}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-600">Total products</div>
+              <div className="text-lg font-bold text-slate-800">
+                {colours.reduce((sum, colour) => {
+                  return sum + Object.entries(colour.orders).reduce((s, [pid, qty]) => s + qty, 0);
+                }, 0).toLocaleString()}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-600">Total fabric needed</div>
+              <div className="text-lg font-bold text-blue-600">
+                {colours.reduce((sum, c) => sum + calculateColourTotal(c), 0).toFixed(1)}m
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
