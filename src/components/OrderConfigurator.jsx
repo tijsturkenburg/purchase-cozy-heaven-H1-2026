@@ -20,6 +20,7 @@ export default function OrderConfigurator() {
     // Individual Fitted Sheets
     { id: 'fs-90-200', item: 'Fitted sheet', width: 90, length: 200, type: 'sheet', category: 'individual', sku: 'CH031514' },
     { id: 'fs-100-200', item: 'Fitted sheet', width: 100, length: 200, type: 'sheet', category: 'individual', sku: 'CH313414' },
+    { id: 'fs-120-200', item: 'Fitted sheet', width: 120, length: 200, type: 'sheet', category: 'individual', sku: '' },
     { id: 'fs-140-200', item: 'Fitted sheet', width: 140, length: 200, type: 'sheet', category: 'individual', sku: 'CH031614' },
     { id: 'fs-160-200', item: 'Fitted sheet', width: 160, length: 200, type: 'sheet', category: 'individual', sku: 'CH031714' },
     { id: 'fs-180-200', item: 'Fitted sheet', width: 180, length: 200, type: 'sheet', category: 'individual', sku: 'CH031414' },
@@ -98,6 +99,37 @@ export default function OrderConfigurator() {
   const [scenarioName, setScenarioName] = useState('');
   const [showOptimization, setShowOptimization] = useState(null); // colourId or null
   const [optimizationResult, setOptimizationResult] = useState(null);
+  const [showPercentageCalculator, setShowPercentageCalculator] = useState(null); // colourId or null
+  const [percentageResult, setPercentageResult] = useState(null);
+
+  // Product distribution percentages based on the image
+  const productPercentages = {
+    // Bedding Sets (Bettwäsche) - percentages
+    'set-135-200-40-80': 15,
+    'set-135-200-80-80': 26,
+    'set-155-220-40-80': 7,
+    'set-155-220-80-80': 8,
+    'set-200-200-40-80-2x': 1,
+    'set-200-200-80-80-2x': 2,
+    'set-200-220-40-80-2x': 1,
+    'set-200-220-80-80-2x': 1,
+    'set-240-220-40-80-2x': 1,
+    'set-240-220-80-80-2x': 1,
+    
+    // Pillowcases (Kissenbezug) - percentages
+    'pc-40-80': 70,
+    'pc-80-80': 30,
+    
+    // Fitted Sheets (Spannbettlaken) - percentages
+    'fs-100-200': 4,
+    'fs-120-200': 1,
+    'fs-140-200': 4,
+    'fs-160-200': 3,
+    'fs-180-200': 7,
+    'fs-200-200': 4,
+    'fs-200-220': 3,
+    'fs-90-200': 7
+  };
 
   // Load scenarios from localStorage on mount
   useEffect(() => {
@@ -131,9 +163,15 @@ export default function OrderConfigurator() {
     };
 
     const handleEscape = (event) => {
-      if (event.key === 'Escape' && showOptimization) {
-        setShowOptimization(null);
-        setOptimizationResult(null);
+      if (event.key === 'Escape') {
+        if (showOptimization) {
+          setShowOptimization(null);
+          setOptimizationResult(null);
+        }
+        if (showPercentageCalculator) {
+          setShowPercentageCalculator(null);
+          setPercentageResult(null);
+        }
       }
     };
 
@@ -143,7 +181,7 @@ export default function OrderConfigurator() {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [showScenarioInput, showLoadDropdown, showOptimization]);
+  }, [showScenarioInput, showLoadDropdown, showOptimization, showPercentageCalculator]);
 
   const calculateFabric = (width, length, type, pillowSize, pillowCount) => {
     // For bedding sets, calculate duvet cover + pillowcases
@@ -504,6 +542,161 @@ export default function OrderConfigurator() {
     setOptimizationResult(null);
   };
 
+  const calculateFromPercentages = (colourId, totalFabricMeters) => {
+    const colour = colours.find(c => c.id === colourId);
+    if (!colour) return;
+
+    // Calculate total percentage for normalization
+    const totalPercentage = Object.values(productPercentages).reduce((sum, pct) => sum + pct, 0);
+    
+    // Calculate fabric per percentage point
+    const fabricPerPercent = totalFabricMeters / totalPercentage;
+    
+    // Calculate quantities for each product based on percentages
+    const calculatedOrders = {};
+    const breakdown = {
+      sets: {},
+      individualItems: {},
+      totalFabric: 0
+    };
+
+    // Process bedding sets first
+    fabricProducts.filter(p => p.category === 'sets').forEach(set => {
+      const percentage = productPercentages[set.id] || 0;
+      if (percentage > 0) {
+        const fabricForSet = fabricPerPercent * percentage;
+        const fabricPerSet = calculateFabric(set.width, set.length, set.type, set.pillowSize, set.pillowCount);
+        const quantity = Math.round(fabricForSet / fabricPerSet);
+        
+        if (quantity > 0) {
+          calculatedOrders[set.id] = quantity;
+          breakdown.sets[set.id] = {
+            quantity,
+            fabricPerSet,
+            totalFabric: quantity * fabricPerSet,
+            percentage
+          };
+          breakdown.totalFabric += quantity * fabricPerSet;
+
+          // Break down set into individual components
+          set.components.forEach(componentId => {
+            if (!calculatedOrders[componentId]) {
+              calculatedOrders[componentId] = 0;
+            }
+            calculatedOrders[componentId] += quantity;
+          });
+        }
+      }
+    });
+
+    // Process individual pillowcases (Kissenbezug)
+    ['pc-40-80', 'pc-80-80'].forEach(pcId => {
+      const percentage = productPercentages[pcId] || 0;
+      if (percentage > 0) {
+        const product = fabricProducts.find(p => p.id === pcId);
+        if (product) {
+          const fabricForItem = fabricPerPercent * percentage;
+          const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+          const quantity = Math.round(fabricForItem / fabricPerUnit);
+          
+          if (quantity > 0) {
+            // Add to existing quantity from sets
+            calculatedOrders[pcId] = (calculatedOrders[pcId] || 0) + quantity;
+            breakdown.individualItems[pcId] = {
+              quantity: calculatedOrders[pcId],
+              fabricPerUnit,
+              totalFabric: calculatedOrders[pcId] * fabricPerUnit,
+              percentage,
+              fromSets: calculatedOrders[pcId] - quantity,
+              individual: quantity
+            };
+            breakdown.totalFabric += quantity * fabricPerUnit;
+          }
+        }
+      }
+    });
+
+    // Process fitted sheets
+    ['fs-90-200', 'fs-100-200', 'fs-120-200', 'fs-140-200', 'fs-160-200', 'fs-180-200', 'fs-200-200', 'fs-200-220'].forEach(fsId => {
+      const percentage = productPercentages[fsId] || 0;
+      if (percentage > 0) {
+        const product = fabricProducts.find(p => p.id === fsId);
+        if (product) {
+          const fabricForItem = fabricPerPercent * percentage;
+          const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+          const quantity = Math.round(fabricForItem / fabricPerUnit);
+          
+          if (quantity > 0) {
+            calculatedOrders[fsId] = quantity;
+            breakdown.individualItems[fsId] = {
+              quantity,
+              fabricPerUnit,
+              totalFabric: quantity * fabricPerUnit,
+              percentage
+            };
+            breakdown.totalFabric += quantity * fabricPerUnit;
+          }
+        }
+      }
+    });
+
+    // Calculate individual duvet covers from sets
+    fabricProducts.filter(p => p.type === 'cover' && p.category === 'individual').forEach(dc => {
+      const setsWithThisDc = fabricProducts.filter(p => 
+        p.category === 'sets' && 
+        p.components && 
+        p.components.includes(dc.id)
+      );
+      
+      let totalDcQuantity = 0;
+      setsWithThisDc.forEach(set => {
+        totalDcQuantity += calculatedOrders[set.id] || 0;
+      });
+      
+      if (totalDcQuantity > 0) {
+        calculatedOrders[dc.id] = totalDcQuantity;
+        const fabricPerUnit = calculateFabric(dc.width, dc.length, dc.type, dc.pillowSize, dc.pillowCount);
+        breakdown.individualItems[dc.id] = {
+          quantity: totalDcQuantity,
+          fabricPerUnit,
+          totalFabric: totalDcQuantity * fabricPerUnit,
+          percentage: null, // Calculated from sets
+          fromSets: totalDcQuantity
+        };
+      }
+    });
+
+    setPercentageResult({
+      colourId,
+      colourName: colour.name,
+      totalFabricMeters,
+      calculatedOrders,
+      breakdown,
+      summary: {
+        totalSets: Object.values(breakdown.sets).reduce((sum, s) => sum + s.quantity, 0),
+        totalIndividualItems: Object.values(breakdown.individualItems).reduce((sum, i) => sum + i.quantity, 0),
+        totalCalculatedFabric: breakdown.totalFabric
+      }
+    });
+    setShowPercentageCalculator(colourId);
+  };
+
+  const applyPercentageCalculation = () => {
+    if (!percentageResult) return;
+
+    const { colourId, calculatedOrders } = percentageResult;
+    
+    setColours(colours.map(colour => {
+      if (colour.id === colourId) {
+        return { ...colour, orders: calculatedOrders };
+      }
+      return colour;
+    }));
+
+    setShowPercentageCalculator(null);
+    setPercentageResult(null);
+  };
+
   return (
     <div className="w-full max-w-[95vw] mx-auto p-2 bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="bg-white rounded-lg shadow-lg p-3">
@@ -685,14 +878,26 @@ export default function OrderConfigurator() {
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => optimizeComposition(colour.id)}
-                  className="w-full mt-2 px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-1"
-                  title="Optimize composition to meet MOQ"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  Optimize
-                </button>
+                <div className="flex gap-1 mt-2">
+                  <button
+                    onClick={() => optimizeComposition(colour.id)}
+                    className="flex-1 px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-1"
+                    title="Optimize composition to meet MOQ"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Optimize
+                  </button>
+                  <button
+                    onClick={() => {
+                      const currentTotal = calculateColourTotal(colour);
+                      calculateFromPercentages(colour.id, currentTotal > 0 ? currentTotal : moq);
+                    }}
+                    className="flex-1 px-2 py-1 bg-teal-600 text-white rounded text-xs hover:bg-teal-700 transition-colors font-medium flex items-center justify-center gap-1"
+                    title="Calculate from percentages"
+                  >
+                    %
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -805,6 +1010,162 @@ export default function OrderConfigurator() {
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Percentage Calculator Modal */}
+        {showPercentageCalculator && percentageResult && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowPercentageCalculator(null)}>
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <span className="text-2xl">%</span>
+                    Calculate from Percentages: {percentageResult.colourName}
+                  </h2>
+                  <button
+                    onClick={() => setShowPercentageCalculator(null)}
+                    className="text-slate-500 hover:text-slate-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <div className="mb-4 bg-slate-50 p-3 rounded">
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="text-xs text-slate-600 mb-1 block">Total Fabric (meters)</label>
+                      <input
+                        type="number"
+                        value={percentageResult.totalFabricMeters}
+                        onChange={(e) => {
+                          const newTotal = parseFloat(e.target.value) || 0;
+                          calculateFromPercentages(percentageResult.colourId, newTotal);
+                        }}
+                        className="w-full px-3 py-2 border border-slate-300 rounded text-base focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        min="0"
+                        step="0.1"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <div className="w-full">
+                        <div className="text-xs text-slate-600">Calculated Total Fabric</div>
+                        <div className="text-lg font-bold text-teal-800">{percentageResult.summary.totalCalculatedFabric.toFixed(1)}m</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <span className="text-slate-600">Total Sets: </span>
+                      <span className="font-bold">{percentageResult.summary.totalSets}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Total Individual Items: </span>
+                      <span className="font-bold">{percentageResult.summary.totalIndividualItems}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Difference: </span>
+                      <span className={`font-bold ${Math.abs(percentageResult.totalFabricMeters - percentageResult.summary.totalCalculatedFabric) < 1 ? 'text-green-600' : 'text-amber-600'}`}>
+                        {(percentageResult.totalFabricMeters - percentageResult.summary.totalCalculatedFabric).toFixed(1)}m
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Bedding Sets Breakdown */}
+                  {Object.keys(percentageResult.breakdown.sets).length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-slate-800 mb-2 text-sm">Bedding Sets (Bundles)</h3>
+                      <div className="space-y-1">
+                        {Object.entries(percentageResult.breakdown.sets).map(([setId, data]) => {
+                          const set = fabricProducts.find(p => p.id === setId);
+                          return (
+                            <div key={setId} className="p-2 bg-blue-50 rounded border border-blue-200 text-xs">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="font-medium">{set?.item} {set?.width}×{set?.length} + {set?.pillowSize}</span>
+                                  <span className="text-slate-600 ml-2">({data.percentage}%)</span>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-bold">{data.quantity} sets</div>
+                                  <div className="text-slate-600">{data.totalFabric.toFixed(1)}m</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Individual Items Breakdown */}
+                  {Object.keys(percentageResult.breakdown.individualItems).length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-slate-800 mb-2 text-sm">Individual Items (Production Quantities)</h3>
+                      <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                        {Object.entries(percentageResult.breakdown.individualItems)
+                          .sort(([a], [b]) => {
+                            const productA = fabricProducts.find(p => p.id === a);
+                            const productB = fabricProducts.find(p => p.id === b);
+                            if (productA?.type !== productB?.type) {
+                              const order = { 'cover': 1, 'pillowcase': 2, 'sheet': 3 };
+                              return (order[productA?.type] || 0) - (order[productB?.type] || 0);
+                            }
+                            return a.localeCompare(b);
+                          })
+                          .map(([itemId, data]) => {
+                            const product = fabricProducts.find(p => p.id === itemId);
+                            return (
+                              <div key={itemId} className={`p-2 rounded border text-xs ${
+                                product?.type === 'cover' ? 'bg-green-50 border-green-200' :
+                                product?.type === 'pillowcase' ? 'bg-purple-50 border-purple-200' :
+                                'bg-amber-50 border-amber-200'
+                              }`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <span className="font-medium">{product?.item} {product?.width}×{product?.length}</span>
+                                    {data.percentage !== null && (
+                                      <span className="text-slate-600 ml-2">({data.percentage}%)</span>
+                                    )}
+                                    {data.fromSets !== undefined && data.fromSets > 0 && (
+                                      <div className="text-xs text-slate-500 mt-0.5">
+                                        {data.fromSets} from sets, {data.individual || 0} individual
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold">{data.quantity} units</div>
+                                    <div className="text-slate-600">{data.totalFabric.toFixed(1)}m</div>
+                                    <div className="text-xs text-slate-500">{data.fabricPerUnit.toFixed(2)}m/unit</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 mt-6">
+                  <button
+                    onClick={applyPercentageCalculation}
+                    className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
+                  >
+                    Apply Calculation
+                  </button>
+                  <button
+                    onClick={() => setShowPercentageCalculator(null)}
+                    className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
