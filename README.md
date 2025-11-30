@@ -80,62 +80,59 @@ The development server runs on port 3000 by default with Vite's fast HMR (Hot Mo
 
 ## Deployment
 
-### Deploy to Vercel (Recommended)
+### Railway (Recommended - Supports Database)
 
-1. **Install Vercel CLI** (if not already installed):
+Railway supports Node.js apps with persistent storage for SQLite databases.
+
+**Option 1: Deploy via Railway CLI**
+
+1. **Install Railway CLI** (if not already installed):
    ```bash
-   npm i -g vercel
+   npm i -g @railway/cli
    ```
 
-2. **Deploy**:
+2. **Login to Railway**:
    ```bash
-   vercel
+   railway login
    ```
-   
-   Follow the prompts to link your project and deploy.
 
-3. **Or deploy via GitHub**:
-   - Push your code to GitHub
-   - Go to [vercel.com](https://vercel.com)
-   - Click "New Project"
-   - Import your GitHub repository
-   - Vercel will automatically detect Vite and deploy
-
-### Deploy to Netlify
-
-1. **Install Netlify CLI**:
+3. **Initialize and deploy**:
    ```bash
-   npm i -g netlify-cli
+   railway init
+   railway up
    ```
 
-2. **Build and deploy**:
-   ```bash
-   npm run build
-   netlify deploy --prod --dir=dist
-   ```
+**Option 2: Deploy via Railway Web Dashboard**
 
-### Deploy to GitHub Pages
+1. Go to [railway.app](https://railway.app) and sign up/login
+2. Click "New Project"
+3. Select "Deploy from GitHub repo"
+4. Connect your GitHub repository
+5. Railway will automatically detect Node.js and deploy
+6. The database will be created automatically in Railway's persistent storage
 
-1. **Install gh-pages**:
-   ```bash
-   npm install --save-dev gh-pages
-   ```
+### Render
 
-2. **Add to package.json scripts**:
-   ```json
-   "deploy": "npm run build && gh-pages -d dist"
-   ```
+1. Go to [render.com](https://render.com) and sign up/login
+2. Create a new "Web Service"
+3. Connect your GitHub repository
+4. Set:
+   - **Build Command**: `npm run build`
+   - **Start Command**: `npm start`
+   - **Environment**: Node
+5. Add a persistent disk for database storage
+6. Deploy
 
-3. **Deploy**:
-   ```bash
-   npm run deploy
-   ```
-
-### Build for Production
+### Local Production Build
 
 ```bash
 npm run build
+npm start
 ```
 
-The production build will be in the `dist/` directory, ready to be deployed to any static hosting service.
+The production build will be in the `dist/` directory, and the server will run on port 3000 (or PORT environment variable).
+
+### Database
+
+The SQLite database is automatically created in the `data/` directory on first run. In production (Railway/Render), the database persists in the platform's storage.
 
