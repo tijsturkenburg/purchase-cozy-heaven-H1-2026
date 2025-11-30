@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles, Menu, Settings } from 'lucide-react';
 
 export default function OrderConfigurator() {
   const [fabricWidth] = useState(240);
@@ -101,6 +101,9 @@ export default function OrderConfigurator() {
   const [optimizationResult, setOptimizationResult] = useState(null);
   const [showPercentageCalculator, setShowPercentageCalculator] = useState(null); // colourId or null
   const [percentageResult, setPercentageResult] = useState(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showScenarioManager, setShowScenarioManager] = useState(false);
+  const [newScenarioName, setNewScenarioName] = useState('');
 
   // Product distribution percentages based on the image
   const productPercentages = {
@@ -153,12 +156,17 @@ export default function OrderConfigurator() {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      const target = event.target;
+      
       if (showScenarioInput || showLoadDropdown) {
-        const target = event.target;
         if (!target.closest('.scenario-dropdown')) {
           setShowScenarioInput(false);
           setShowLoadDropdown(false);
         }
+      }
+      
+      if (showMenu && !target.closest('.menu-dropdown')) {
+        setShowMenu(false);
       }
     };
 
@@ -172,6 +180,12 @@ export default function OrderConfigurator() {
           setShowPercentageCalculator(null);
           setPercentageResult(null);
         }
+        if (showScenarioManager) {
+          setShowScenarioManager(false);
+        }
+        if (showMenu) {
+          setShowMenu(false);
+        }
       }
     };
 
@@ -181,7 +195,7 @@ export default function OrderConfigurator() {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [showScenarioInput, showLoadDropdown, showOptimization, showPercentageCalculator]);
+  }, [showScenarioInput, showLoadDropdown, showOptimization, showPercentageCalculator, showScenarioManager, showMenu]);
 
   const calculateFabric = (width, length, type, pillowSize, pillowCount) => {
     // For bedding sets, calculate duvet cover + pillowcases
@@ -346,15 +360,16 @@ export default function OrderConfigurator() {
     }
   };
 
-  const saveScenario = () => {
-    if (!scenarioName.trim()) {
+  const saveScenario = (name = null) => {
+    const scenarioNameToUse = name || scenarioName;
+    if (!scenarioNameToUse.trim()) {
       alert('Please enter a scenario name');
       return;
     }
 
     const newScenario = {
       id: Date.now(),
-      name: scenarioName.trim(),
+      name: scenarioNameToUse.trim(),
       colours: JSON.parse(JSON.stringify(colours)), // Deep copy
       savedAt: new Date().toISOString()
     };
@@ -363,7 +378,9 @@ export default function OrderConfigurator() {
     setScenarios(updatedScenarios);
     localStorage.setItem('orderScenarios', JSON.stringify(updatedScenarios));
     setScenarioName('');
+    setNewScenarioName('');
     setShowScenarioInput(false);
+    setShowScenarioManager(false);
     alert(`Scenario "${newScenario.name}" saved successfully!`);
   };
 
@@ -699,14 +716,62 @@ export default function OrderConfigurator() {
 
   return (
     <div className="w-full max-w-[95vw] mx-auto p-2 bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="bg-white rounded-lg shadow-lg p-3">
-        <div className="flex items-center justify-between mb-2">
+      {/* Menu Bar */}
+      <div className="bg-white rounded-lg shadow-lg p-2 mb-2">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-6 h-6 text-blue-600" />
             <div>
               <h1 className="text-xl font-bold text-slate-800">Order configurator</h1>
               <p className="text-slate-600 text-xs">MOQ: {moq.toLocaleString()}m per colour</p>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative menu-dropdown">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="px-3 py-1.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm flex items-center gap-1"
+                title="Menu"
+              >
+                <Menu className="w-4 h-4" />
+                Menu
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg z-30 min-w-[200px] menu-dropdown">
+                  <button
+                    onClick={() => {
+                      setShowScenarioManager(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    Create Scenario
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowLoadDropdown(!showLoadDropdown);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                    Load Scenario
+                  </button>
+                  <div className="border-t border-slate-200 my-1"></div>
+                  <div className="px-4 py-2 text-xs text-slate-500">
+                    {scenarios.length} scenario{scenarios.length !== 1 ? 's' : ''} saved
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -1193,7 +1258,7 @@ export default function OrderConfigurator() {
               {/* Bedding Sets Section */}
               <tr className="bg-blue-100">
                 <td colSpan={5 + colours.length + 2} className="px-2 py-1 font-bold text-blue-900 text-xs">
-                  BEDDING SETS (1x Duvet cover + Pillowcase(s)) - For tracking only, components added to individual items below
+                  BEDDING SETS (Packing/Tracking) - Produced as individual items below, but packed together as sets
                 </td>
               </tr>
               {fabricProducts.filter(p => p.category === 'sets').map((product, idx) => {
@@ -1601,6 +1666,130 @@ export default function OrderConfigurator() {
           </div>
         </div>
       </div>
+
+      {/* Scenario Manager Modal */}
+      {showScenarioManager && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowScenarioManager(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Save className="w-5 h-5 text-green-600" />
+                  Scenario Manager
+                </h2>
+                <button
+                  onClick={() => setShowScenarioManager(false)}
+                  className="text-slate-500 hover:text-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4">
+              {/* Create New Scenario */}
+              <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <h3 className="font-semibold text-slate-800 mb-3">Create New Scenario</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newScenarioName}
+                    onChange={(e) => setNewScenarioName(e.target.value)}
+                    placeholder="Enter scenario name..."
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    onKeyPress={(e) => e.key === 'Enter' && saveScenario(newScenarioName)}
+                  />
+                  <button
+                    onClick={() => saveScenario(newScenarioName)}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm"
+                  >
+                    Save Scenario
+                  </button>
+                </div>
+                <p className="text-xs text-slate-600 mt-2">
+                  Current order will be saved as a new scenario
+                </p>
+              </div>
+
+              {/* Saved Scenarios */}
+              <div>
+                <h3 className="font-semibold text-slate-800 mb-3">Saved Scenarios ({scenarios.length})</h3>
+                {scenarios.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500">
+                    <FolderOpen className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                    <p>No scenarios saved yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {scenarios.map((scenario) => {
+                      const scenarioTotal = scenario.colours.reduce((sum, c) => {
+                        return sum + Object.entries(c.orders).reduce((s, [pid, qty]) => {
+                          const product = fabricProducts.find(p => p.id === pid);
+                          if (product && product.category === 'individual') {
+                            const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
+                            return s + (fabricPerUnit * qty);
+                          }
+                          return s;
+                        }, 0);
+                      }, 0);
+
+                      return (
+                        <div
+                          key={scenario.id}
+                          className={`p-3 rounded-lg border-2 ${
+                            selectedScenario === scenario.id 
+                              ? 'border-blue-500 bg-blue-50' 
+                              : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-slate-800">{scenario.name}</h4>
+                                {selectedScenario === scenario.id && (
+                                  <span className="px-2 py-0.5 bg-blue-600 text-white text-xs rounded">Loaded</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-600 mt-1">
+                                Saved: {new Date(scenario.savedAt).toLocaleString()}
+                              </div>
+                              <div className="text-xs text-slate-600 mt-1">
+                                {scenario.colours.length} colour{scenario.colours.length !== 1 ? 's' : ''} • 
+                                Total fabric: <span className="font-semibold">{scenarioTotal.toFixed(1)}m</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  loadScenario(scenario.id);
+                                  setShowScenarioManager(false);
+                                }}
+                                className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+                              >
+                                Load
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteScenario(scenario.id, e);
+                                }}
+                                className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
+                                title="Delete scenario"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
