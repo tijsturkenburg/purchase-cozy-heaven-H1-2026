@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const { getScenarios, getScenarioById, createScenario, updateScenario, deleteScenario } = require('./database');
+const { getScenarios, getScenarioById, createScenario, updateScenario, deleteScenario, initializeDatabase } = require('./database-supabase');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,14 +17,17 @@ app.use(express.json());
 
 // API Routes for Scenarios
 
+// Initialize database on startup
+initializeDatabase().catch(console.error);
+
 // Get all scenarios
-app.get('/api/scenarios', (req, res) => {
+app.get('/api/scenarios', async (req, res) => {
   try {
-    const scenarios = getScenarios.all();
+    const scenarios = await getScenarios();
     const formattedScenarios = scenarios.map(scenario => ({
       id: scenario.id,
       name: scenario.name,
-      colours: JSON.parse(scenario.colours),
+      colours: typeof scenario.colours === 'string' ? JSON.parse(scenario.colours) : scenario.colours,
       savedAt: scenario.created_at,
       updatedAt: scenario.updated_at
     }));
@@ -36,16 +39,16 @@ app.get('/api/scenarios', (req, res) => {
 });
 
 // Get a single scenario by ID
-app.get('/api/scenarios/:id', (req, res) => {
+app.get('/api/scenarios/:id', async (req, res) => {
   try {
-    const scenario = getScenarioById.get(parseInt(req.params.id));
+    const scenario = await getScenarioById(parseInt(req.params.id));
     if (!scenario) {
       return res.status(404).json({ error: 'Scenario not found' });
     }
     res.json({
       id: scenario.id,
       name: scenario.name,
-      colours: JSON.parse(scenario.colours),
+      colours: typeof scenario.colours === 'string' ? JSON.parse(scenario.colours) : scenario.colours,
       savedAt: scenario.created_at,
       updatedAt: scenario.updated_at
     });
@@ -56,7 +59,7 @@ app.get('/api/scenarios/:id', (req, res) => {
 });
 
 // Create a new scenario
-app.post('/api/scenarios', (req, res) => {
+app.post('/api/scenarios', async (req, res) => {
   try {
     const { name, colours } = req.body;
     
@@ -64,13 +67,12 @@ app.post('/api/scenarios', (req, res) => {
       return res.status(400).json({ error: 'Name and colours are required' });
     }
 
-    const result = createScenario.run(name, JSON.stringify(colours));
-    const newScenario = getScenarioById.get(result.lastInsertRowid);
+    const newScenario = await createScenario(name, colours);
     
     res.status(201).json({
       id: newScenario.id,
       name: newScenario.name,
-      colours: JSON.parse(newScenario.colours),
+      colours: typeof newScenario.colours === 'string' ? JSON.parse(newScenario.colours) : newScenario.colours,
       savedAt: newScenario.created_at,
       updatedAt: newScenario.updated_at
     });
@@ -81,7 +83,7 @@ app.post('/api/scenarios', (req, res) => {
 });
 
 // Update an existing scenario
-app.put('/api/scenarios/:id', (req, res) => {
+app.put('/api/scenarios/:id', async (req, res) => {
   try {
     const { name, colours } = req.body;
     const id = parseInt(req.params.id);
@@ -90,17 +92,16 @@ app.put('/api/scenarios/:id', (req, res) => {
       return res.status(400).json({ error: 'Name and colours are required' });
     }
 
-    const result = updateScenario.run(name, JSON.stringify(colours), id);
+    const updatedScenario = await updateScenario(id, name, colours);
     
-    if (result.changes === 0) {
+    if (!updatedScenario) {
       return res.status(404).json({ error: 'Scenario not found' });
     }
 
-    const updatedScenario = getScenarioById.get(id);
     res.json({
       id: updatedScenario.id,
       name: updatedScenario.name,
-      colours: JSON.parse(updatedScenario.colours),
+      colours: typeof updatedScenario.colours === 'string' ? JSON.parse(updatedScenario.colours) : updatedScenario.colours,
       savedAt: updatedScenario.created_at,
       updatedAt: updatedScenario.updated_at
     });
@@ -111,15 +112,10 @@ app.put('/api/scenarios/:id', (req, res) => {
 });
 
 // Delete a scenario
-app.delete('/api/scenarios/:id', (req, res) => {
+app.delete('/api/scenarios/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const result = deleteScenario.run(id);
-    
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Scenario not found' });
-    }
-
+    await deleteScenario(id);
     res.json({ message: 'Scenario deleted successfully' });
   } catch (error) {
     console.error('Error deleting scenario:', error);

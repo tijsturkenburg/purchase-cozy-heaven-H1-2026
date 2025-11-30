@@ -4,46 +4,56 @@
 
 Railway is the easiest way to deploy this app with database support.
 
-### Step 1: Push to GitHub
-Make sure your code is pushed to GitHub:
-```bash
-git push origin main
-```
+### Step 1: Set Up Supabase Database
 
-### Step 2: Deploy via Railway Web Interface
-
-1. **Go to Railway**: Visit [railway.app](https://railway.app) and sign up/login (free tier available)
-
-2. **Create New Project**:
+1. **Go to Supabase**: Visit [supabase.com](https://supabase.com) and sign up/login
+2. **Create a New Project**:
    - Click "New Project"
-   - Select "Deploy from GitHub repo"
-   - Authorize Railway to access your GitHub
+   - Enter project name and set a database password
+   - Choose a region
+   - Click "Create new project"
+3. **Run SQL Setup**:
+   - Go to "SQL Editor" in Supabase dashboard
+   - Click "New Query"
+   - Copy and paste the contents of `supabase-setup.sql`
+   - Click "Run" to create the scenarios table
+4. **Get Credentials**:
+   - Go to Project Settings → API
+   - Copy: **Project URL** (SUPABASE_URL) and **anon/public key** (SUPABASE_ANON_KEY)
+
+### Step 2: Deploy to Vercel
+
+1. **Go to Vercel**: Visit [vercel.com](https://vercel.com) and sign up/login
+2. **Import Project**:
+   - Click "Add New..." → "Project"
+   - Import from GitHub
    - Select your repository: `purchase-cozy-heaven-H1-2026`
-
-3. **Railway Auto-Detection**:
-   - Railway will automatically detect Node.js
-   - It will use `npm start` as the start command
-   - The database will be created automatically in Railway's persistent storage
-
-4. **Get Your URL**:
-   - Once deployed, Railway will provide a public URL
-   - Your app will be live at: `https://your-app-name.up.railway.app`
-
-5. **Environment Variables** (Optional):
-   - Railway automatically sets `PORT` environment variable
-   - No additional configuration needed!
+3. **Configure**:
+   - Framework: Vite (auto-detected)
+   - Build Command: `npm run build` (auto-detected)
+   - Output Directory: `dist` (auto-detected)
+4. **Add Environment Variables**:
+   - Click "Environment Variables"
+   - Add:
+     - `SUPABASE_URL` = Your Supabase Project URL
+     - `SUPABASE_ANON_KEY` = Your Supabase anon/public key
+   - Add for Production, Preview, and Development
+5. **Deploy**:
+   - Click "Deploy"
+   - Wait for build to complete
+   - Your app will be live!
 
 ### Step 3: Verify Deployment
 
-1. Visit your Railway URL
+1. Visit your Vercel URL (e.g., `https://your-app.vercel.app`)
 2. Test creating a scenario
-3. The database will persist across deployments
+3. Check Supabase dashboard → Table Editor → `scenarios` to see your data
 
 
 ## Database Persistence
 
-- **Railway**: Database automatically persists in Railway's storage
-- **Local**: Database stored in `data/scenarios.db`
+- **Vercel + Supabase**: Database persists in Supabase (PostgreSQL)
+- **Local**: Can use Supabase or fallback to localStorage
 
 ## Troubleshooting
 
@@ -52,8 +62,8 @@ git push origin main
 - Check that the `data/` directory is writable
 
 ### Port issues?
-- Railway and Render automatically set the `PORT` environment variable
-- The server.js already uses `process.env.PORT || 3000`
+- Vercel automatically handles ports for serverless functions
+- No port configuration needed
 
 ### Build fails?
 - Make sure all dependencies are in `package.json`
