@@ -60,10 +60,13 @@ module.exports = async function handler(req, res) {
       case 'POST':
         // Create scenario
         const { name, colours } = req.body;
+        console.log('POST request received:', { name, hasColours: !!colours });
+        
         if (!name || !colours) {
           return res.status(400).json({ error: 'Name and colours are required' });
         }
 
+        console.log('Attempting to insert into scenarios table...');
         const { data: newScenario, error: createError } = await supabase
           .from('scenarios')
           .insert({ name, colours })
@@ -71,14 +74,30 @@ module.exports = async function handler(req, res) {
           .single();
         
         if (createError) {
-          console.error('Supabase insert error:', createError);
+          console.error('Supabase insert error:', {
+            message: createError.message,
+            code: createError.code,
+            details: createError.details,
+            hint: createError.hint
+          });
           return res.status(500).json({ 
             error: 'Database error', 
-            details: createError.message,
-            code: createError.code
+            message: createError.message,
+            code: createError.code,
+            details: createError.details,
+            hint: createError.hint || 'Check if table exists and RLS policies are set correctly'
           });
         }
         
+        if (!newScenario) {
+          console.error('No data returned from insert');
+          return res.status(500).json({ 
+            error: 'Insert failed', 
+            message: 'No data returned from database'
+          });
+        }
+        
+        console.log('Scenario created successfully:', newScenario.id);
         res.status(201).json({
           id: newScenario.id,
           name: newScenario.name,

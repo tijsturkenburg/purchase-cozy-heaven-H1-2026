@@ -501,7 +501,9 @@ export default function OrderConfigurator() {
       } else {
         const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}: ${response.statusText}` }));
         console.error('Save failed:', errorData);
-        alert(`Failed to save scenario: ${errorData.error || `HTTP ${response.status}`}. Check console for details.`);
+        const errorMessage = errorData.message || errorData.error || errorData.details || `HTTP ${response.status}`;
+        const errorHint = errorData.hint ? `\n\nHint: ${errorData.hint}` : '';
+        alert(`Failed to save scenario: ${errorMessage}${errorHint}\n\nCheck browser console for full details.`);
       }
     } catch (error) {
       console.error('Error saving scenario:', error);
