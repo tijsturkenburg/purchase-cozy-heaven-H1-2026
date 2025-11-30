@@ -1,14 +1,16 @@
 // Vercel Serverless Function for single scenario operations
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+function getSupabaseClient() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables. Please set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel.');
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 module.exports = async function handler(req, res) {
   // Enable CORS
@@ -25,6 +27,8 @@ module.exports = async function handler(req, res) {
   const { id } = req.query;
 
   try {
+    const supabase = getSupabaseClient();
+    
     switch (req.method) {
       case 'GET':
         // Get single scenario
