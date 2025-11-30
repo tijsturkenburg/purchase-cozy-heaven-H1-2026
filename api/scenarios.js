@@ -58,7 +58,15 @@ module.exports = async function handler(req, res) {
           .select()
           .single();
         
-        if (createError) throw createError;
+        if (createError) {
+          console.error('Supabase insert error:', createError);
+          return res.status(500).json({ 
+            error: 'Database error', 
+            details: createError.message,
+            code: createError.code
+          });
+        }
+        
         res.status(201).json({
           id: newScenario.id,
           name: newScenario.name,

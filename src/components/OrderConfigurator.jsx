@@ -499,12 +499,13 @@ export default function OrderConfigurator() {
         setShowScenarioManager(false);
         alert(`Scenario "${newScenario.name}" saved successfully!`);
       } else {
-        const error = await response.json();
-        alert(`Failed to save scenario: ${error.error || 'Unknown error'}`);
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}: ${response.statusText}` }));
+        console.error('Save failed:', errorData);
+        alert(`Failed to save scenario: ${errorData.error || `HTTP ${response.status}`}. Check console for details.`);
       }
     } catch (error) {
       console.error('Error saving scenario:', error);
-      alert('Failed to save scenario. Please try again.');
+      alert(`Failed to save scenario: ${error.message || 'Network error'}. Check console for details.`);
     }
   };
 
