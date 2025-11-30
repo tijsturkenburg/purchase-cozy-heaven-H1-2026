@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: purchase-cozy-heaven
+    env: node
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: data-disk
+      mountPath: /data
+      sizeGB: 1
+
