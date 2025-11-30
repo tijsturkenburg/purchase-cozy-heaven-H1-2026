@@ -1241,17 +1241,17 @@ export default function OrderConfigurator() {
           <table className="w-full border-collapse">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-800 text-white">
-                <th className="px-4 py-3 text-left sticky left-0 bg-slate-800 z-30 min-w-[180px] text-sm font-semibold">Product</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold min-w-[100px]">SKU</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold min-w-[120px]">Details</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold min-w-[100px]">Fabric/unit</th>
+                <th className="px-2 py-1.5 text-left sticky left-0 bg-slate-800 z-30 min-w-[160px] text-xs font-semibold">Product</th>
+                <th className="px-2 py-1.5 text-left text-xs font-semibold min-w-[90px]">SKU</th>
+                <th className="px-2 py-1.5 text-left text-xs font-semibold min-w-[110px]">Details</th>
+                <th className="px-2 py-1.5 text-right text-xs font-semibold min-w-[90px]">Fabric/unit</th>
                 {colours.map((colour) => (
-                  <th key={colour.id} className="px-4 py-3 text-center min-w-[150px] text-sm font-semibold">
+                  <th key={colour.id} className="px-2 py-1.5 text-center min-w-[130px] text-xs font-semibold">
                     {colour.name}
                   </th>
                 ))}
-                <th className="px-4 py-3 text-right bg-slate-700 text-sm font-semibold min-w-[100px]">Total units</th>
-                <th className="px-4 py-3 text-right bg-slate-700 text-sm font-semibold min-w-[100px]">Total fabric</th>
+                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold min-w-[90px]">Total units</th>
+                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold min-w-[90px]">Total fabric</th>
               </tr>
             </thead>
             <tbody>
@@ -1268,34 +1268,34 @@ export default function OrderConfigurator() {
                 return (
                   <React.Fragment key={setProduct.id}>
                     {/* Set Row */}
-                    <tr className="bg-blue-50 border-b-2 border-blue-200">
-                      <td className="px-4 py-2.5 font-semibold text-blue-900 sticky left-0 z-10 text-sm border-r-2 border-blue-200" style={{ backgroundColor: '#dbeafe' }}>
+                    <tr className="bg-blue-50 border-b border-blue-200">
+                      <td className="px-2 py-1 font-semibold text-blue-900 sticky left-0 z-10 text-xs border-r border-blue-200" style={{ backgroundColor: '#dbeafe' }}>
                         📦 {setProduct.item}
                       </td>
-                      <td className="px-4 py-2.5 text-blue-700 text-sm font-mono">
+                      <td className="px-2 py-1 text-blue-700 text-xs font-mono">
                         {setProduct.sku}
                       </td>
-                      <td className="px-4 py-2.5 text-blue-700 text-sm font-medium">
+                      <td className="px-2 py-1 text-blue-700 text-xs font-medium">
                         {setDetails}
                       </td>
-                      <td className="px-4 py-2.5 text-right text-blue-600 italic text-sm">
+                      <td className="px-2 py-1 text-right text-blue-600 italic text-xs">
                         Packing Set
                       </td>
                       {colours.map((colour) => {
                         const qty = colour.orders[setProduct.id] || 0;
                         return (
-                          <td key={colour.id} className="px-4 py-2.5 bg-blue-50">
-                            <div className="flex items-center justify-center gap-1.5">
+                          <td key={colour.id} className="px-2 py-1 bg-blue-50">
+                            <div className="flex items-center justify-center gap-1">
                               <button
                                 onClick={() => updateQuantity(colour.id, setProduct.id, -10)}
-                                className="p-1 rounded bg-blue-200 hover:bg-blue-300 transition-colors text-xs"
+                                className="p-0.5 rounded bg-blue-200 hover:bg-blue-300 transition-colors text-xs"
                                 disabled={qty === 0}
                               >
                                 -10
                               </button>
                               <button
                                 onClick={() => updateQuantity(colour.id, setProduct.id, -1)}
-                                className="p-1 rounded bg-blue-200 hover:bg-blue-300 transition-colors"
+                                className="p-0.5 rounded bg-blue-200 hover:bg-blue-300 transition-colors"
                                 disabled={qty === 0}
                               >
                                 <Minus className="w-3 h-3" />
@@ -1307,34 +1307,34 @@ export default function OrderConfigurator() {
                                 value={qty || ''}
                                 placeholder="0"
                                 onChange={(e) => setQuantity(colour.id, setProduct.id, e.target.value)}
-                                className="w-16 px-2 py-1 text-center border-2 border-blue-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                                className="w-12 px-1 py-0.5 text-center border border-blue-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                               />
                               
                               <button
                                 onClick={() => updateQuantity(colour.id, setProduct.id, 1)}
-                                className="p-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                               >
                                 <Plus className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => updateQuantity(colour.id, setProduct.id, 10)}
-                                className="p-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
+                                className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
                               >
                                 +10
                               </button>
                             </div>
                             {qty > 0 && (
-                              <div className="text-sm text-center text-blue-700 mt-1 font-semibold">
+                              <div className="text-xs text-center text-blue-700 mt-0.5 font-medium">
                                 {qty} sets
                               </div>
                             )}
                           </td>
                         );
                       })}
-                      <td className="px-4 py-2.5 text-right font-mono font-semibold text-blue-900 bg-blue-100 text-sm">
+                      <td className="px-2 py-1 text-right font-mono font-semibold text-blue-900 bg-blue-100 text-xs">
                         {totalSetUnits > 0 ? totalSetUnits.toLocaleString() : '—'}
                       </td>
-                      <td className="px-4 py-2.5 text-right font-mono text-blue-600 bg-blue-100 italic text-sm">
+                      <td className="px-2 py-1 text-right font-mono text-blue-600 bg-blue-100 italic text-xs">
                         —
                       </td>
                     </tr>
@@ -1346,35 +1346,35 @@ export default function OrderConfigurator() {
                       const totalFabric = totalUnits * fabricPerUnit;
                       
                       return (
-                        <tr key={duvetCover.id} className="bg-green-50 hover:bg-green-100 transition-colors border-l-4 border-green-400">
-                          <td className="px-4 py-2 pl-6 font-medium text-slate-700 sticky left-0 z-10 text-sm" style={{ backgroundColor: '#f0fdf4' }}>
+                        <tr key={duvetCover.id} className="bg-green-50 hover:bg-green-100 transition-colors border-l-2 border-green-400">
+                          <td className="px-2 py-1 pl-4 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: '#f0fdf4' }}>
                             └─ {duvetCover.item}
                           </td>
-                          <td className="px-4 py-2 text-slate-600 text-sm font-mono">
+                          <td className="px-2 py-1 text-slate-600 text-xs font-mono">
                             {duvetCover.sku}
                           </td>
-                          <td className="px-4 py-2 text-slate-700 text-sm font-medium">
+                          <td className="px-2 py-1 text-slate-700 text-xs font-medium">
                             {duvetCover.width}×{duvetCover.length}
                           </td>
-                          <td className="px-4 py-2 text-right text-slate-700 text-sm font-mono">
+                          <td className="px-2 py-1 text-right text-slate-700 text-xs font-mono">
                             {fabricPerUnit.toFixed(2)}m
                           </td>
                           {colours.map((colour) => {
                             const qty = colour.orders[duvetCover.id] || 0;
                             const subtotal = fabricPerUnit * qty;
                             return (
-                              <td key={colour.id} className="px-4 py-2 bg-green-50">
-                                <div className="flex items-center justify-center gap-1.5">
+                              <td key={colour.id} className="px-2 py-1 bg-green-50">
+                                <div className="flex items-center justify-center gap-1">
                                   <button
                                     onClick={() => updateQuantity(colour.id, duvetCover.id, -10)}
-                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                                    className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
                                     disabled={qty === 0}
                                   >
                                     -10
                                   </button>
                                   <button
                                     onClick={() => updateQuantity(colour.id, duvetCover.id, -1)}
-                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                                    className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
                                     disabled={qty === 0}
                                   >
                                     <Minus className="w-3 h-3" />
@@ -1386,34 +1386,34 @@ export default function OrderConfigurator() {
                                     value={qty || ''}
                                     placeholder="0"
                                     onChange={(e) => setQuantity(colour.id, duvetCover.id, e.target.value)}
-                                    className="w-16 px-2 py-1 text-center border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-green-500 focus:border-green-500"
                                   />
                                   
                                   <button
                                     onClick={() => updateQuantity(colour.id, duvetCover.id, 1)}
-                                    className="p-1 rounded bg-green-600 hover:bg-green-700 text-white transition-colors"
+                                    className="p-0.5 rounded bg-green-600 hover:bg-green-700 text-white transition-colors"
                                   >
                                     <Plus className="w-3 h-3" />
                                   </button>
                                   <button
                                     onClick={() => updateQuantity(colour.id, duvetCover.id, 10)}
-                                    className="p-1 rounded bg-green-600 hover:bg-green-700 text-white transition-colors text-xs"
+                                    className="p-0.5 rounded bg-green-600 hover:bg-green-700 text-white transition-colors text-xs"
                                   >
                                     +10
                                   </button>
                                 </div>
                                 {qty > 0 && (
-                                  <div className="text-sm text-center text-slate-700 mt-1 font-mono">
+                                  <div className="text-xs text-center text-slate-700 mt-0.5 font-mono">
                                     {subtotal.toFixed(1)}m
                                   </div>
                                 )}
                               </td>
                             );
                           })}
-                          <td className="px-4 py-2 text-right font-mono font-semibold text-slate-700 bg-green-100 text-sm">
+                          <td className="px-2 py-1 text-right font-mono font-semibold text-slate-700 bg-green-100 text-xs">
                             {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
                           </td>
-                          <td className="px-4 py-2 text-right font-mono font-semibold text-green-700 bg-green-100 text-sm">
+                          <td className="px-2 py-1 text-right font-mono font-semibold text-green-700 bg-green-100 text-xs">
                             {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
                           </td>
                         </tr>
@@ -1428,35 +1428,35 @@ export default function OrderConfigurator() {
                       const totalFabric = totalUnits * fabricPerUnit;
                       
                       return (
-                        <tr key={pillowcase.id} className="bg-purple-50 hover:bg-purple-100 transition-colors border-l-4 border-purple-400">
-                          <td className="px-4 py-2 pl-6 font-medium text-slate-700 sticky left-0 z-10 text-sm" style={{ backgroundColor: '#faf5ff' }}>
+                        <tr key={pillowcase.id} className="bg-purple-50 hover:bg-purple-100 transition-colors border-l-2 border-purple-400">
+                          <td className="px-2 py-1 pl-4 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: '#faf5ff' }}>
                             └─ {pillowcase.item}
                           </td>
-                          <td className="px-4 py-2 text-slate-600 text-sm font-mono">
+                          <td className="px-2 py-1 text-slate-600 text-xs font-mono">
                             {pillowcase.sku}
                           </td>
-                          <td className="px-4 py-2 text-slate-700 text-sm font-medium">
+                          <td className="px-2 py-1 text-slate-700 text-xs font-medium">
                             {pillowcase.width}×{pillowcase.length}
                           </td>
-                          <td className="px-4 py-2 text-right text-slate-700 text-sm font-mono">
+                          <td className="px-2 py-1 text-right text-slate-700 text-xs font-mono">
                             {fabricPerUnit.toFixed(2)}m
                           </td>
                           {colours.map((colour) => {
                             const qty = colour.orders[pillowcase.id] || 0;
                             const subtotal = fabricPerUnit * qty;
                             return (
-                              <td key={colour.id} className="px-4 py-2 bg-purple-50">
-                                <div className="flex items-center justify-center gap-1.5">
+                              <td key={colour.id} className="px-2 py-1 bg-purple-50">
+                                <div className="flex items-center justify-center gap-1">
                                   <button
                                     onClick={() => updateQuantity(colour.id, pillowcase.id, -10)}
-                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                                    className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
                                     disabled={qty === 0}
                                   >
                                     -10
                                   </button>
                                   <button
                                     onClick={() => updateQuantity(colour.id, pillowcase.id, -1)}
-                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                                    className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
                                     disabled={qty === 0}
                                   >
                                     <Minus className="w-3 h-3" />
@@ -1468,34 +1468,34 @@ export default function OrderConfigurator() {
                                     value={qty || ''}
                                     placeholder="0"
                                     onChange={(e) => setQuantity(colour.id, pillowcase.id, e.target.value)}
-                                    className="w-16 px-2 py-1 text-center border border-slate-300 rounded text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                    className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
                                   />
                                   
                                   <button
                                     onClick={() => updateQuantity(colour.id, pillowcase.id, 1)}
-                                    className="p-1 rounded bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                                    className="p-0.5 rounded bg-purple-600 hover:bg-purple-700 text-white transition-colors"
                                   >
                                     <Plus className="w-3 h-3" />
                                   </button>
                                   <button
                                     onClick={() => updateQuantity(colour.id, pillowcase.id, 10)}
-                                    className="p-1 rounded bg-purple-600 hover:bg-purple-700 text-white transition-colors text-xs"
+                                    className="p-0.5 rounded bg-purple-600 hover:bg-purple-700 text-white transition-colors text-xs"
                                   >
                                     +10
                                   </button>
                                 </div>
                                 {qty > 0 && (
-                                  <div className="text-sm text-center text-slate-700 mt-1 font-mono">
+                                  <div className="text-xs text-center text-slate-700 mt-0.5 font-mono">
                                     {subtotal.toFixed(1)}m
                                   </div>
                                 )}
                               </td>
                             );
                           })}
-                          <td className="px-4 py-2 text-right font-mono font-semibold text-slate-700 bg-purple-100 text-sm">
+                          <td className="px-2 py-1 text-right font-mono font-semibold text-slate-700 bg-purple-100 text-xs">
                             {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
                           </td>
-                          <td className="px-4 py-2 text-right font-mono font-semibold text-purple-700 bg-purple-100 text-sm">
+                          <td className="px-2 py-1 text-right font-mono font-semibold text-purple-700 bg-purple-100 text-xs">
                             {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
                           </td>
                         </tr>
@@ -1505,7 +1505,7 @@ export default function OrderConfigurator() {
                     {/* Spacer row between sets */}
                     {setIdx < fabricProducts.filter(p => p.category === 'sets').length - 1 && (
                       <tr>
-                        <td colSpan={5 + colours.length + 2} className="px-4 py-2 bg-slate-100"></td>
+                        <td colSpan={5 + colours.length + 2} className="px-2 py-0.5 bg-slate-100"></td>
                       </tr>
                     )}
                   </React.Fragment>
@@ -1514,7 +1514,7 @@ export default function OrderConfigurator() {
 
               {/* Standalone Individual Items Section */}
               <tr className="bg-amber-100">
-                <td colSpan={5 + colours.length + 2} className="px-4 py-2 font-bold text-amber-900 text-sm border-t-4 border-amber-400">
+                <td colSpan={5 + colours.length + 2} className="px-2 py-1 font-bold text-amber-900 text-xs border-t-2 border-amber-400">
                   FITTED SHEETS (Individual Items - Not in Sets)
                 </td>
               </tr>
@@ -1526,16 +1526,16 @@ export default function OrderConfigurator() {
 
                 return (
                   <tr key={product.id} className={`${bgColor} hover:bg-amber-50 transition-colors`}>
-                    <td className="px-4 py-2 font-medium text-slate-700 sticky left-0 z-10 text-sm" style={{ backgroundColor: 'inherit' }}>
+                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
                       {product.item}
                     </td>
-                    <td className="px-4 py-2 text-slate-600 text-sm font-mono">
+                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
                       {product.sku}
                     </td>
-                    <td className="px-4 py-2 text-slate-700 text-sm font-medium">
+                    <td className="px-2 py-1 text-slate-700 text-xs font-medium">
                       {product.width}×{product.length}
                     </td>
-                    <td className="px-4 py-2 text-right text-slate-700 text-sm font-mono">
+                    <td className="px-2 py-1 text-right text-slate-700 text-xs font-mono">
                       {fabricPerUnit.toFixed(2)}m
                     </td>
                     {colours.map((colour) => {
@@ -1543,18 +1543,18 @@ export default function OrderConfigurator() {
                       const subtotal = fabricPerUnit * qty;
 
                       return (
-                        <td key={colour.id} className="px-4 py-2">
-                          <div className="flex items-center justify-center gap-1.5">
+                        <td key={colour.id} className="px-2 py-1">
+                          <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, -10)}
-                              className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
                               disabled={qty === 0}
                             >
                               -10
                             </button>
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, -1)}
-                              className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
                               disabled={qty === 0}
                             >
                               <Minus className="w-3 h-3" />
@@ -1566,34 +1566,34 @@ export default function OrderConfigurator() {
                               value={qty || ''}
                               placeholder="0"
                               onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
-                              className="w-16 px-2 py-1 text-center border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
                             />
                             
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, 1)}
-                              className="p-1 rounded bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+                              className="p-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white transition-colors"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, 10)}
-                              className="p-1 rounded bg-amber-600 hover:bg-amber-700 text-white transition-colors text-xs"
+                              className="p-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white transition-colors text-xs"
                             >
                               +10
                             </button>
                           </div>
                           {qty > 0 && (
-                            <div className="text-sm text-center text-slate-700 mt-1 font-mono">
+                            <div className="text-xs text-center text-slate-700 mt-0.5 font-mono">
                               {subtotal.toFixed(1)}m
                             </div>
                           )}
                         </td>
                       );
                     })}
-                    <td className="px-4 py-2 text-right font-mono font-semibold text-slate-700 bg-slate-100 text-sm">
+                    <td className="px-2 py-1 text-right font-mono font-semibold text-slate-700 bg-slate-100 text-xs">
                       {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
                     </td>
-                    <td className="px-4 py-2 text-right font-mono font-semibold text-amber-700 bg-slate-100 text-sm">
+                    <td className="px-2 py-1 text-right font-mono font-semibold text-amber-700 bg-slate-100 text-xs">
                       {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
                     </td>
                   </tr>
@@ -1602,16 +1602,16 @@ export default function OrderConfigurator() {
             </tbody>
             <tfoot className="sticky bottom-0">
               <tr className="bg-slate-800 text-white font-bold">
-                <td colSpan="4" className="px-4 py-3 text-right text-sm sticky left-0 bg-slate-800 z-30">Total per colour (production fabric):</td>
+                <td colSpan="4" className="px-2 py-1.5 text-right text-xs sticky left-0 bg-slate-800 z-30">Total per colour (production fabric):</td>
                 {colours.map((colour) => {
                   const total = calculateColourTotal(colour);
                   return (
-                    <td key={colour.id} className="px-4 py-3 text-center font-mono text-sm">
+                    <td key={colour.id} className="px-2 py-1.5 text-center font-mono text-xs">
                       {total.toFixed(1)}m
                     </td>
                   );
                 })}
-                <td className="px-4 py-3 text-right bg-slate-700 text-sm">
+                <td className="px-2 py-1.5 text-right bg-slate-700 text-xs">
                   {colours.reduce((sum, colour) => {
                     // Count only individual items (sets are just for tracking)
                     return sum + Object.entries(colour.orders).reduce((s, [pid, qty]) => {
@@ -1620,7 +1620,7 @@ export default function OrderConfigurator() {
                     }, 0);
                   }, 0).toLocaleString()}
                 </td>
-                <td className="px-4 py-3 text-right bg-slate-700 font-mono text-sm">
+                <td className="px-2 py-1.5 text-right bg-slate-700 font-mono text-xs">
                   {colours.reduce((sum, c) => sum + calculateColourTotal(c), 0).toFixed(1)}m
                 </td>
               </tr>
