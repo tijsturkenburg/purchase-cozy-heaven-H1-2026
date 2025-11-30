@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles } from 'lucide-react';
 
 export default function OrderConfigurator() {
   const [fabricWidth] = useState(240);
@@ -96,6 +96,8 @@ export default function OrderConfigurator() {
   const [showScenarioInput, setShowScenarioInput] = useState(false);
   const [showLoadDropdown, setShowLoadDropdown] = useState(false);
   const [scenarioName, setScenarioName] = useState('');
+  const [showOptimization, setShowOptimization] = useState(null); // colourId or null
+  const [optimizationResult, setOptimizationResult] = useState(null);
 
   // Load scenarios from localStorage on mount
   useEffect(() => {
@@ -128,11 +130,20 @@ export default function OrderConfigurator() {
       }
     };
 
+    const handleEscape = (event) => {
+      if (event.key === 'Escape' && showOptimization) {
+        setShowOptimization(null);
+        setOptimizationResult(null);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
     };
-  }, [showScenarioInput, showLoadDropdown]);
+  }, [showScenarioInput, showLoadDropdown, showOptimization]);
 
   const calculateFabric = (width, length, type, pillowSize, pillowCount) => {
     // For bedding sets, calculate duvet cover + pillowcases
@@ -341,6 +352,158 @@ export default function OrderConfigurator() {
     }
   };
 
+  const optimizeComposition = (colourId) => {
+    const colour = colours.find(c => c.id === colourId);
+    if (!colour) return;
+
+    const currentTotal = calculateColourTotal(colour);
+    const target = moq;
+    const difference = target - currentTotal;
+
+    // Get all individual products (not sets) with their fabric per unit
+    const individualProducts = fabricProducts
+      .filter(p => p.category === 'individual')
+      .map(product => ({
+        ...product,
+        fabricPerUnit: calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount),
+        currentQty: colour.orders[product.id] || 0
+      }))
+      .sort((a, b) => b.fabricPerUnit - a.fabricPerUnit); // Sort by fabric per unit (descending)
+
+    const recommendations = {
+      currentTotal: currentTotal,
+      target: target,
+      difference: difference,
+      suggestions: [],
+      newTotal: currentTotal
+    };
+
+    if (difference > 0) {
+      // Need to add products to meet MOQ
+      let remaining = difference;
+      const suggestions = [];
+
+      // Try to add products efficiently
+      for (const product of individualProducts) {
+        if (remaining <= 0) break;
+
+        const unitsNeeded = Math.ceil(remaining / product.fabricPerUnit);
+        const fabricAdded = unitsNeeded * product.fabricPerUnit;
+        
+        if (unitsNeeded > 0 && fabricAdded <= remaining + product.fabricPerUnit) {
+          suggestions.push({
+            productId: product.id,
+            productName: `${product.item} ${product.width}×${product.length}`,
+            action: 'add',
+            units: unitsNeeded,
+            currentQty: product.currentQty,
+            newQty: product.currentQty + unitsNeeded,
+            fabricPerUnit: product.fabricPerUnit,
+            totalFabric: fabricAdded
+          });
+          remaining -= fabricAdded;
+          recommendations.newTotal += fabricAdded;
+        }
+      }
+
+      // If still not enough, suggest adding more of existing products
+      if (remaining > 0) {
+        for (const product of individualProducts) {
+          if (remaining <= 0) break;
+          if (product.currentQty > 0) {
+            const unitsNeeded = Math.ceil(remaining / product.fabricPerUnit);
+            const fabricAdded = unitsNeeded * product.fabricPerUnit;
+            
+            suggestions.push({
+              productId: product.id,
+              productName: `${product.item} ${product.width}×${product.length}`,
+              action: 'add',
+              units: unitsNeeded,
+              currentQty: product.currentQty,
+              newQty: product.currentQty + unitsNeeded,
+              fabricPerUnit: product.fabricPerUnit,
+              totalFabric: fabricAdded
+            });
+            remaining -= fabricAdded;
+            recommendations.newTotal += fabricAdded;
+          }
+        }
+      }
+
+      recommendations.suggestions = suggestions;
+    } else if (difference < -100) {
+      // Over MOQ by more than 100m, suggest reducing
+      let excess = Math.abs(difference);
+      const suggestions = [];
+
+      // Sort by current quantity (descending) to reduce from products with most units
+      const productsWithOrders = individualProducts
+        .filter(p => p.currentQty > 0)
+        .sort((a, b) => b.currentQty - a.currentQty);
+
+      for (const product of productsWithOrders) {
+        if (excess <= 0) break;
+
+        const unitsToReduce = Math.min(
+          Math.floor(excess / product.fabricPerUnit),
+          product.currentQty
+        );
+
+        if (unitsToReduce > 0) {
+          const fabricReduced = unitsToReduce * product.fabricPerUnit;
+          suggestions.push({
+            productId: product.id,
+            productName: `${product.item} ${product.width}×${product.length}`,
+            action: 'reduce',
+            units: unitsToReduce,
+            currentQty: product.currentQty,
+            newQty: product.currentQty - unitsToReduce,
+            fabricPerUnit: product.fabricPerUnit,
+            totalFabric: fabricReduced
+          });
+          excess -= fabricReduced;
+          recommendations.newTotal -= fabricReduced;
+        }
+      }
+
+      recommendations.suggestions = suggestions;
+    }
+
+    setOptimizationResult({ colourId, colourName: colour.name, ...recommendations });
+    setShowOptimization(colourId);
+  };
+
+  const applyOptimization = () => {
+    if (!optimizationResult) return;
+
+    const { colourId, suggestions } = optimizationResult;
+    
+    setColours(colours.map(colour => {
+      if (colour.id === colourId) {
+        const newOrders = { ...colour.orders };
+        
+        suggestions.forEach(suggestion => {
+          if (suggestion.action === 'add') {
+            newOrders[suggestion.productId] = (newOrders[suggestion.productId] || 0) + suggestion.units;
+          } else if (suggestion.action === 'reduce') {
+            const newQty = Math.max(0, (newOrders[suggestion.productId] || 0) - suggestion.units);
+            if (newQty === 0) {
+              delete newOrders[suggestion.productId];
+            } else {
+              newOrders[suggestion.productId] = newQty;
+            }
+          }
+        });
+
+        return { ...colour, orders: newOrders };
+      }
+      return colour;
+    }));
+
+    setShowOptimization(null);
+    setOptimizationResult(null);
+  };
+
   return (
     <div className="w-full max-w-[95vw] mx-auto p-2 bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="bg-white rounded-lg shadow-lg p-3">
@@ -522,10 +685,130 @@ export default function OrderConfigurator() {
                     </div>
                   )}
                 </div>
+                <button
+                  onClick={() => optimizeComposition(colour.id)}
+                  className="w-full mt-2 px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-1"
+                  title="Optimize composition to meet MOQ"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Optimize
+                </button>
               </div>
             );
           })}
         </div>
+
+        {/* Optimization Modal */}
+        {showOptimization && optimizationResult && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowOptimization(null)}>
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                    Optimize Composition: {optimizationResult.colourName}
+                  </h2>
+                  <button
+                    onClick={() => setShowOptimization(null)}
+                    className="text-slate-500 hover:text-slate-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <div className="mb-4 grid grid-cols-3 gap-4">
+                  <div className="bg-slate-50 p-3 rounded">
+                    <div className="text-xs text-slate-600">Current Total</div>
+                    <div className="text-lg font-bold text-slate-800">{optimizationResult.currentTotal.toFixed(1)}m</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded">
+                    <div className="text-xs text-blue-600">Target (MOQ)</div>
+                    <div className="text-lg font-bold text-blue-800">{optimizationResult.target.toFixed(0)}m</div>
+                  </div>
+                  <div className={`p-3 rounded ${optimizationResult.newTotal >= moq ? 'bg-green-50' : 'bg-amber-50'}`}>
+                    <div className={`text-xs ${optimizationResult.newTotal >= moq ? 'text-green-600' : 'text-amber-600'}`}>New Total</div>
+                    <div className={`text-lg font-bold ${optimizationResult.newTotal >= moq ? 'text-green-800' : 'text-amber-800'}`}>
+                      {optimizationResult.newTotal.toFixed(1)}m
+                    </div>
+                  </div>
+                </div>
+
+                {optimizationResult.suggestions.length > 0 ? (
+                  <>
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-slate-800 mb-2">
+                        {optimizationResult.difference > 0 ? 'Suggested Additions:' : 'Suggested Reductions:'}
+                      </h3>
+                      <div className="space-y-2">
+                        {optimizationResult.suggestions.map((suggestion, idx) => (
+                          <div
+                            key={idx}
+                            className={`p-3 rounded border ${
+                              suggestion.action === 'add' 
+                                ? 'bg-green-50 border-green-200' 
+                                : 'bg-red-50 border-red-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium text-sm text-slate-800">
+                                  {suggestion.productName}
+                                </div>
+                                <div className="text-xs text-slate-600 mt-1">
+                                  {suggestion.action === 'add' ? '+' : '-'}{suggestion.units} units 
+                                  ({suggestion.currentQty} → {suggestion.newQty})
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-bold text-slate-800">
+                                  {suggestion.action === 'add' ? '+' : '-'}{suggestion.totalFabric.toFixed(1)}m
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  {suggestion.fabricPerUnit.toFixed(2)}m/unit
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={applyOptimization}
+                        className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                      >
+                        Apply Optimization
+                      </button>
+                      <button
+                        onClick={() => setShowOptimization(null)}
+                        className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                    <p className="text-slate-600">
+                      {optimizationResult.currentTotal >= moq 
+                        ? 'This colour already meets the MOQ! No optimization needed.'
+                        : 'No optimization suggestions available.'}
+                    </p>
+                    <button
+                      onClick={() => setShowOptimization(null)}
+                      className="mt-4 px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400 font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Products Table */}
         <div className="overflow-x-auto">
