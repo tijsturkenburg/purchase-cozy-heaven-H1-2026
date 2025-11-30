@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles, Menu, Settings } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles, Menu, Settings, Package, ShoppingBag } from 'lucide-react';
+import ProductManager from './ProductManager';
+import PurchaseOrderManager from './PurchaseOrderManager';
 
 export default function OrderConfigurator() {
   const [fabricWidth] = useState(240);
@@ -104,6 +106,8 @@ export default function OrderConfigurator() {
   const [showMenu, setShowMenu] = useState(false);
   const [showScenarioManager, setShowScenarioManager] = useState(false);
   const [newScenarioName, setNewScenarioName] = useState('');
+  const [showProductManager, setShowProductManager] = useState(false);
+  const [showPurchaseOrderManager, setShowPurchaseOrderManager] = useState(false);
 
   // Product distribution percentages (unit-based from image)
   const unitPercentages = {
@@ -856,6 +860,27 @@ export default function OrderConfigurator() {
                   >
                     <FolderOpen className="w-4 h-4" />
                     Load Scenario
+                  </button>
+                  <div className="border-t border-slate-200 my-1"></div>
+                  <button
+                    onClick={() => {
+                      setShowProductManager(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                  >
+                    <Package className="w-4 h-4" />
+                    Manage Products
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPurchaseOrderManager(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    Purchase Orders
                   </button>
                   <div className="border-t border-slate-200 my-1"></div>
                   <div className="px-4 py-2 text-xs text-slate-500">
@@ -1811,6 +1836,21 @@ export default function OrderConfigurator() {
           </div>
         </div>
       </div>
+
+      {/* Product Manager Modal */}
+      {showProductManager && (
+        <ProductManager
+          onClose={() => setShowProductManager(false)}
+        />
+      )}
+
+      {/* Purchase Order Manager Modal */}
+      {showPurchaseOrderManager && (
+        <PurchaseOrderManager
+          onClose={() => setShowPurchaseOrderManager(false)}
+          currentOrder={{ colours }}
+        />
+      )}
 
       {/* Scenario Manager Modal */}
       {showScenarioManager && (
