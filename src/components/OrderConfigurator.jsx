@@ -1237,292 +1237,285 @@ export default function OrderConfigurator() {
         )}
 
         {/* Products Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <table className="w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-20">
               <tr className="bg-slate-800 text-white">
-                <th className="px-2 py-1.5 text-left sticky left-0 bg-slate-800 z-10 min-w-[140px] text-xs font-semibold">Product</th>
-                <th className="px-2 py-1.5 text-left text-xs font-semibold">SKU</th>
-                <th className="px-2 py-1.5 text-left text-xs font-semibold">Details</th>
-                <th className="px-2 py-1.5 text-right text-xs font-semibold">Fabric/unit</th>
+                <th className="px-4 py-3 text-left sticky left-0 bg-slate-800 z-30 min-w-[180px] text-sm font-semibold">Product</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold min-w-[100px]">SKU</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold min-w-[120px]">Details</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold min-w-[100px]">Fabric/unit</th>
                 {colours.map((colour) => (
-                  <th key={colour.id} className="px-2 py-1.5 text-center min-w-[120px] text-xs font-semibold">
+                  <th key={colour.id} className="px-4 py-3 text-center min-w-[150px] text-sm font-semibold">
                     {colour.name}
                   </th>
                 ))}
-                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold">Total units</th>
-                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold">Total fabric</th>
+                <th className="px-4 py-3 text-right bg-slate-700 text-sm font-semibold min-w-[100px]">Total units</th>
+                <th className="px-4 py-3 text-right bg-slate-700 text-sm font-semibold min-w-[100px]">Total fabric</th>
               </tr>
             </thead>
             <tbody>
-              {/* Bedding Sets Section */}
-              <tr className="bg-blue-100">
-                <td colSpan={5 + colours.length + 2} className="px-2 py-1 font-bold text-blue-900 text-xs">
-                  BEDDING SETS (Packing/Tracking) - Produced as individual items below, but packed together as sets
-                </td>
-              </tr>
-              {fabricProducts.filter(p => p.category === 'sets').map((product, idx) => {
-                const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[product.id] || 0), 0);
-                const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
-
-                const pillowText = product.pillowCount > 1 ? `${product.pillowCount}x ` : '1x ';
-                const details = `${product.width}×${product.length} + ${pillowText}${product.pillowSize}`;
+              {/* Group Sets with their Components */}
+              {fabricProducts.filter(p => p.category === 'sets').map((setProduct, setIdx) => {
+                const totalSetUnits = colours.reduce((sum, colour) => sum + (colour.orders[setProduct.id] || 0), 0);
+                const pillowText = setProduct.pillowCount > 1 ? `${setProduct.pillowCount}x ` : '1x ';
+                const setDetails = `${setProduct.width}×${setProduct.length} + ${pillowText}${setProduct.pillowSize}`;
+                
+                // Get components for this set
+                const duvetCover = fabricProducts.find(p => p.id === setProduct.components[0]);
+                const pillowcases = setProduct.components.slice(1).map(id => fabricProducts.find(p => p.id === id));
 
                 return (
-                  <tr key={product.id} className={`${bgColor} hover:bg-blue-50 transition-colors`}>
-                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
-                      {product.item}
-                    </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
-                      {product.sku}
-                    </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs">
-                      {details}
-                    </td>
-                    <td className="px-2 py-1 text-right text-slate-400 italic text-xs">
-                      —
-                    </td>
-                    {colours.map((colour) => {
-                      const qty = colour.orders[product.id] || 0;
-
-                      return (
-                        <td key={colour.id} className="px-2 py-1">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, -10)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
-                              disabled={qty === 0}
-                            >
-                              -10
-                            </button>
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, -1)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
-                              disabled={qty === 0}
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            
-                            <input
-                              type="number"
-                              min="0"
-                              value={qty || ''}
-                              placeholder="0"
-                              onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
-                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, 1)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, 10)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
-                            >
-                              +10
-                            </button>
-                          </div>
-                          {qty > 0 && (
-                            <div className="text-xs text-center text-blue-600 mt-0.5 font-medium">
-                              {qty} sets
+                  <React.Fragment key={setProduct.id}>
+                    {/* Set Row */}
+                    <tr className="bg-blue-50 border-b-2 border-blue-200">
+                      <td className="px-4 py-2.5 font-semibold text-blue-900 sticky left-0 z-10 text-sm border-r-2 border-blue-200" style={{ backgroundColor: '#dbeafe' }}>
+                        📦 {setProduct.item}
+                      </td>
+                      <td className="px-4 py-2.5 text-blue-700 text-sm font-mono">
+                        {setProduct.sku}
+                      </td>
+                      <td className="px-4 py-2.5 text-blue-700 text-sm font-medium">
+                        {setDetails}
+                      </td>
+                      <td className="px-4 py-2.5 text-right text-blue-600 italic text-sm">
+                        Packing Set
+                      </td>
+                      {colours.map((colour) => {
+                        const qty = colour.orders[setProduct.id] || 0;
+                        return (
+                          <td key={colour.id} className="px-4 py-2.5 bg-blue-50">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => updateQuantity(colour.id, setProduct.id, -10)}
+                                className="p-1 rounded bg-blue-200 hover:bg-blue-300 transition-colors text-xs"
+                                disabled={qty === 0}
+                              >
+                                -10
+                              </button>
+                              <button
+                                onClick={() => updateQuantity(colour.id, setProduct.id, -1)}
+                                className="p-1 rounded bg-blue-200 hover:bg-blue-300 transition-colors"
+                                disabled={qty === 0}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              
+                              <input
+                                type="number"
+                                min="0"
+                                value={qty || ''}
+                                placeholder="0"
+                                onChange={(e) => setQuantity(colour.id, setProduct.id, e.target.value)}
+                                className="w-16 px-2 py-1 text-center border-2 border-blue-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                              />
+                              
+                              <button
+                                onClick={() => updateQuantity(colour.id, setProduct.id, 1)}
+                                className="p-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => updateQuantity(colour.id, setProduct.id, 10)}
+                                className="p-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
+                              >
+                                +10
+                              </button>
                             </div>
-                          )}
-                        </td>
+                            {qty > 0 && (
+                              <div className="text-sm text-center text-blue-700 mt-1 font-semibold">
+                                {qty} sets
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="px-4 py-2.5 text-right font-mono font-semibold text-blue-900 bg-blue-100 text-sm">
+                        {totalSetUnits > 0 ? totalSetUnits.toLocaleString() : '—'}
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-mono text-blue-600 bg-blue-100 italic text-sm">
+                        —
+                      </td>
+                    </tr>
+
+                    {/* Duvet Cover Component */}
+                    {duvetCover && (() => {
+                      const fabricPerUnit = calculateFabric(duvetCover.width, duvetCover.length, duvetCover.type, duvetCover.pillowSize, duvetCover.pillowCount);
+                      const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[duvetCover.id] || 0), 0);
+                      const totalFabric = totalUnits * fabricPerUnit;
+                      
+                      return (
+                        <tr key={duvetCover.id} className="bg-green-50 hover:bg-green-100 transition-colors border-l-4 border-green-400">
+                          <td className="px-4 py-2 pl-6 font-medium text-slate-700 sticky left-0 z-10 text-sm" style={{ backgroundColor: '#f0fdf4' }}>
+                            └─ {duvetCover.item}
+                          </td>
+                          <td className="px-4 py-2 text-slate-600 text-sm font-mono">
+                            {duvetCover.sku}
+                          </td>
+                          <td className="px-4 py-2 text-slate-700 text-sm font-medium">
+                            {duvetCover.width}×{duvetCover.length}
+                          </td>
+                          <td className="px-4 py-2 text-right text-slate-700 text-sm font-mono">
+                            {fabricPerUnit.toFixed(2)}m
+                          </td>
+                          {colours.map((colour) => {
+                            const qty = colour.orders[duvetCover.id] || 0;
+                            const subtotal = fabricPerUnit * qty;
+                            return (
+                              <td key={colour.id} className="px-4 py-2 bg-green-50">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, duvetCover.id, -10)}
+                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                                    disabled={qty === 0}
+                                  >
+                                    -10
+                                  </button>
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, duvetCover.id, -1)}
+                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                                    disabled={qty === 0}
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={qty || ''}
+                                    placeholder="0"
+                                    onChange={(e) => setQuantity(colour.id, duvetCover.id, e.target.value)}
+                                    className="w-16 px-2 py-1 text-center border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                  />
+                                  
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, duvetCover.id, 1)}
+                                    className="p-1 rounded bg-green-600 hover:bg-green-700 text-white transition-colors"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, duvetCover.id, 10)}
+                                    className="p-1 rounded bg-green-600 hover:bg-green-700 text-white transition-colors text-xs"
+                                  >
+                                    +10
+                                  </button>
+                                </div>
+                                {qty > 0 && (
+                                  <div className="text-sm text-center text-slate-700 mt-1 font-mono">
+                                    {subtotal.toFixed(1)}m
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-2 text-right font-mono font-semibold text-slate-700 bg-green-100 text-sm">
+                            {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
+                          </td>
+                          <td className="px-4 py-2 text-right font-mono font-semibold text-green-700 bg-green-100 text-sm">
+                            {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })()}
+
+                    {/* Pillowcase Components */}
+                    {pillowcases.map((pillowcase) => {
+                      if (!pillowcase) return null;
+                      const fabricPerUnit = calculateFabric(pillowcase.width, pillowcase.length, pillowcase.type, pillowcase.pillowSize, pillowcase.pillowCount);
+                      const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[pillowcase.id] || 0), 0);
+                      const totalFabric = totalUnits * fabricPerUnit;
+                      
+                      return (
+                        <tr key={pillowcase.id} className="bg-purple-50 hover:bg-purple-100 transition-colors border-l-4 border-purple-400">
+                          <td className="px-4 py-2 pl-6 font-medium text-slate-700 sticky left-0 z-10 text-sm" style={{ backgroundColor: '#faf5ff' }}>
+                            └─ {pillowcase.item}
+                          </td>
+                          <td className="px-4 py-2 text-slate-600 text-sm font-mono">
+                            {pillowcase.sku}
+                          </td>
+                          <td className="px-4 py-2 text-slate-700 text-sm font-medium">
+                            {pillowcase.width}×{pillowcase.length}
+                          </td>
+                          <td className="px-4 py-2 text-right text-slate-700 text-sm font-mono">
+                            {fabricPerUnit.toFixed(2)}m
+                          </td>
+                          {colours.map((colour) => {
+                            const qty = colour.orders[pillowcase.id] || 0;
+                            const subtotal = fabricPerUnit * qty;
+                            return (
+                              <td key={colour.id} className="px-4 py-2 bg-purple-50">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, pillowcase.id, -10)}
+                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                                    disabled={qty === 0}
+                                  >
+                                    -10
+                                  </button>
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, pillowcase.id, -1)}
+                                    className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                                    disabled={qty === 0}
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={qty || ''}
+                                    placeholder="0"
+                                    onChange={(e) => setQuantity(colour.id, pillowcase.id, e.target.value)}
+                                    className="w-16 px-2 py-1 text-center border border-slate-300 rounded text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                  />
+                                  
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, pillowcase.id, 1)}
+                                    className="p-1 rounded bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => updateQuantity(colour.id, pillowcase.id, 10)}
+                                    className="p-1 rounded bg-purple-600 hover:bg-purple-700 text-white transition-colors text-xs"
+                                  >
+                                    +10
+                                  </button>
+                                </div>
+                                {qty > 0 && (
+                                  <div className="text-sm text-center text-slate-700 mt-1 font-mono">
+                                    {subtotal.toFixed(1)}m
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-2 text-right font-mono font-semibold text-slate-700 bg-purple-100 text-sm">
+                            {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
+                          </td>
+                          <td className="px-4 py-2 text-right font-mono font-semibold text-purple-700 bg-purple-100 text-sm">
+                            {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
+                          </td>
+                        </tr>
                       );
                     })}
-                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
-                      {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
-                    </td>
-                    <td className="px-2 py-1 text-right font-mono text-slate-400 bg-slate-100 italic text-xs">
-                      —
-                    </td>
-                  </tr>
+
+                    {/* Spacer row between sets */}
+                    {setIdx < fabricProducts.filter(p => p.category === 'sets').length - 1 && (
+                      <tr>
+                        <td colSpan={5 + colours.length + 2} className="px-4 py-2 bg-slate-100"></td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
 
-              {/* Individual Duvet Covers Section */}
-              <tr className="bg-green-100">
-                <td colSpan={5 + colours.length + 2} className="px-2 py-0.5 font-bold text-green-900 text-xs">
-                  DUVET COVERS (production quantities - includes sets above)
-                </td>
-              </tr>
-              {fabricProducts.filter(p => p.type === 'cover' && p.category === 'individual').map((product, idx) => {
-                const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
-                const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[product.id] || 0), 0);
-                const totalFabric = totalUnits * fabricPerUnit;
-                const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
-
-                return (
-                  <tr key={product.id} className={`${bgColor} hover:bg-green-50 transition-colors`}>
-                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
-                      {product.item}
-                    </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
-                      {product.sku}
-                    </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs">
-                      {product.width}×{product.length}
-                    </td>
-                    <td className="px-2 py-1 text-right text-slate-600 text-xs font-mono">
-                      {fabricPerUnit.toFixed(2)}m
-                    </td>
-                    {colours.map((colour) => {
-                      const qty = colour.orders[product.id] || 0;
-                      const subtotal = fabricPerUnit * qty;
-
-                      return (
-                        <td key={colour.id} className="px-2 py-1">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, -10)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
-                              disabled={qty === 0}
-                            >
-                              -10
-                            </button>
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, -1)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
-                              disabled={qty === 0}
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            
-                            <input
-                              type="number"
-                              min="0"
-                              value={qty || ''}
-                              placeholder="0"
-                              onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
-                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, 1)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, 10)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
-                            >
-                              +10
-                            </button>
-                          </div>
-                          {qty > 0 && (
-                            <div className="text-xs text-center text-slate-600 mt-0.5 font-mono">
-                              {subtotal.toFixed(1)}m
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
-                      {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
-                    </td>
-                    <td className="px-2 py-1 text-right font-mono font-medium text-blue-600 bg-slate-100 text-xs">
-                      {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {/* Individual Pillowcases Section */}
-              <tr className="bg-purple-100">
-                <td colSpan={5 + colours.length + 2} className="px-2 py-0.5 font-bold text-purple-900 text-xs">
-                  PILLOWCASES (production quantities - includes sets above)
-                </td>
-              </tr>
-              {fabricProducts.filter(p => p.type === 'pillowcase').map((product, idx) => {
-                const fabricPerUnit = calculateFabric(product.width, product.length, product.type, product.pillowSize, product.pillowCount);
-                const totalUnits = colours.reduce((sum, colour) => sum + (colour.orders[product.id] || 0), 0);
-                const totalFabric = totalUnits * fabricPerUnit;
-                const bgColor = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
-
-                return (
-                  <tr key={product.id} className={`${bgColor} hover:bg-purple-50 transition-colors`}>
-                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
-                      {product.item}
-                    </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
-                      {product.sku}
-                    </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs">
-                      {product.width}×{product.length}
-                    </td>
-                    <td className="px-2 py-1 text-right text-slate-600 text-xs font-mono">
-                      {fabricPerUnit.toFixed(2)}m
-                    </td>
-                    {colours.map((colour) => {
-                      const qty = colour.orders[product.id] || 0;
-                      const subtotal = fabricPerUnit * qty;
-
-                      return (
-                        <td key={colour.id} className="px-2 py-1">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, -10)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
-                              disabled={qty === 0}
-                            >
-                              -10
-                            </button>
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, -1)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
-                              disabled={qty === 0}
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            
-                            <input
-                              type="number"
-                              min="0"
-                              value={qty || ''}
-                              placeholder="0"
-                              onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
-                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, 1)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => updateQuantity(colour.id, product.id, 10)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
-                            >
-                              +10
-                            </button>
-                          </div>
-                          {qty > 0 && (
-                            <div className="text-xs text-center text-slate-600 mt-0.5 font-mono">
-                              {subtotal.toFixed(1)}m
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
-                      {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
-                    </td>
-                    <td className="px-2 py-1 text-right font-mono font-medium text-blue-600 bg-slate-100 text-xs">
-                      {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {/* Fitted Sheets Section */}
+              {/* Standalone Individual Items Section */}
               <tr className="bg-amber-100">
-                <td colSpan={5 + colours.length + 2} className="px-2 py-0.5 font-bold text-amber-900 text-xs">
-                  FITTED SHEETS
+                <td colSpan={5 + colours.length + 2} className="px-4 py-2 font-bold text-amber-900 text-sm border-t-4 border-amber-400">
+                  FITTED SHEETS (Individual Items - Not in Sets)
                 </td>
               </tr>
               {fabricProducts.filter(p => p.type === 'sheet').map((product, idx) => {
@@ -1533,16 +1526,16 @@ export default function OrderConfigurator() {
 
                 return (
                   <tr key={product.id} className={`${bgColor} hover:bg-amber-50 transition-colors`}>
-                    <td className="px-2 py-1 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: 'inherit' }}>
+                    <td className="px-4 py-2 font-medium text-slate-700 sticky left-0 z-10 text-sm" style={{ backgroundColor: 'inherit' }}>
                       {product.item}
                     </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs font-mono">
+                    <td className="px-4 py-2 text-slate-600 text-sm font-mono">
                       {product.sku}
                     </td>
-                    <td className="px-2 py-1 text-slate-600 text-xs">
+                    <td className="px-4 py-2 text-slate-700 text-sm font-medium">
                       {product.width}×{product.length}
                     </td>
-                    <td className="px-2 py-1 text-right text-slate-600 text-xs font-mono">
+                    <td className="px-4 py-2 text-right text-slate-700 text-sm font-mono">
                       {fabricPerUnit.toFixed(2)}m
                     </td>
                     {colours.map((colour) => {
@@ -1550,18 +1543,18 @@ export default function OrderConfigurator() {
                       const subtotal = fabricPerUnit * qty;
 
                       return (
-                        <td key={colour.id} className="px-2 py-1">
-                          <div className="flex items-center justify-center gap-1">
+                        <td key={colour.id} className="px-4 py-2">
+                          <div className="flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, -10)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
+                              className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors text-xs"
                               disabled={qty === 0}
                             >
                               -10
                             </button>
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, -1)}
-                              className="p-0.5 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
+                              className="p-1 rounded bg-slate-200 hover:bg-slate-300 transition-colors"
                               disabled={qty === 0}
                             >
                               <Minus className="w-3 h-3" />
@@ -1573,52 +1566,52 @@ export default function OrderConfigurator() {
                               value={qty || ''}
                               placeholder="0"
                               onChange={(e) => setQuantity(colour.id, product.id, e.target.value)}
-                              className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              className="w-16 px-2 py-1 text-center border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                             />
                             
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, 1)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                              className="p-1 rounded bg-amber-600 hover:bg-amber-700 text-white transition-colors"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
                             <button
                               onClick={() => updateQuantity(colour.id, product.id, 10)}
-                              className="p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs"
+                              className="p-1 rounded bg-amber-600 hover:bg-amber-700 text-white transition-colors text-xs"
                             >
                               +10
                             </button>
                           </div>
                           {qty > 0 && (
-                            <div className="text-xs text-center text-slate-600 mt-0.5 font-mono">
+                            <div className="text-sm text-center text-slate-700 mt-1 font-mono">
                               {subtotal.toFixed(1)}m
                             </div>
                           )}
                         </td>
                       );
                     })}
-                    <td className="px-2 py-1 text-right font-mono font-medium text-slate-700 bg-slate-100 text-xs">
+                    <td className="px-4 py-2 text-right font-mono font-semibold text-slate-700 bg-slate-100 text-sm">
                       {totalUnits > 0 ? totalUnits.toLocaleString() : '—'}
                     </td>
-                    <td className="px-2 py-1 text-right font-mono font-medium text-blue-600 bg-slate-100 text-xs">
+                    <td className="px-4 py-2 text-right font-mono font-semibold text-amber-700 bg-slate-100 text-sm">
                       {totalFabric > 0 ? `${totalFabric.toFixed(1)}m` : '—'}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-            <tfoot>
+            <tfoot className="sticky bottom-0">
               <tr className="bg-slate-800 text-white font-bold">
-                <td colSpan="4" className="px-2 py-1.5 text-right text-xs">Total per colour (production fabric):</td>
+                <td colSpan="4" className="px-4 py-3 text-right text-sm sticky left-0 bg-slate-800 z-30">Total per colour (production fabric):</td>
                 {colours.map((colour) => {
                   const total = calculateColourTotal(colour);
                   return (
-                    <td key={colour.id} className="px-2 py-1.5 text-center font-mono text-xs">
+                    <td key={colour.id} className="px-4 py-3 text-center font-mono text-sm">
                       {total.toFixed(1)}m
                     </td>
                   );
                 })}
-                <td className="px-2 py-1.5 text-right bg-slate-700 text-xs">
+                <td className="px-4 py-3 text-right bg-slate-700 text-sm">
                   {colours.reduce((sum, colour) => {
                     // Count only individual items (sets are just for tracking)
                     return sum + Object.entries(colour.orders).reduce((s, [pid, qty]) => {
@@ -1627,7 +1620,7 @@ export default function OrderConfigurator() {
                     }, 0);
                   }, 0).toLocaleString()}
                 </td>
-                <td className="px-2 py-1.5 text-right bg-slate-700 font-mono text-xs">
+                <td className="px-4 py-3 text-right bg-slate-700 font-mono text-sm">
                   {colours.reduce((sum, c) => sum + calculateColourTotal(c), 0).toFixed(1)}m
                 </td>
               </tr>
