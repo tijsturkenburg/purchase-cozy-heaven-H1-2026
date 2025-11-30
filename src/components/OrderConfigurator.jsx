@@ -135,24 +135,32 @@ export default function OrderConfigurator() {
   };
 
 
-  // Load scenarios from localStorage on mount
+  // Load scenarios from database on mount
   useEffect(() => {
-    const savedScenarios = localStorage.getItem('orderScenarios');
-    if (savedScenarios) {
+    const loadScenarios = async () => {
       try {
-        setScenarios(JSON.parse(savedScenarios));
-      } catch (e) {
-        console.error('Error loading scenarios:', e);
+        const response = await fetch('/api/scenarios');
+        if (response.ok) {
+          const data = await response.json();
+          setScenarios(data);
+        } else {
+          console.error('Failed to load scenarios');
+        }
+      } catch (error) {
+        console.error('Error loading scenarios:', error);
+        // Fallback to localStorage for backward compatibility
+        const savedScenarios = localStorage.getItem('orderScenarios');
+        if (savedScenarios) {
+          try {
+            setScenarios(JSON.parse(savedScenarios));
+          } catch (e) {
+            console.error('Error parsing localStorage scenarios:', e);
+          }
+        }
       }
-    }
+    };
+    loadScenarios();
   }, []);
-
-  // Save scenarios to localStorage whenever scenarios change
-  useEffect(() => {
-    if (scenarios.length > 0) {
-      localStorage.setItem('orderScenarios', JSON.stringify(scenarios));
-    }
-  }, [scenarios]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -463,49 +471,88 @@ export default function OrderConfigurator() {
     }
   };
 
-  const saveScenario = (name = null) => {
+  const saveScenario = async (name = null) => {
     const scenarioNameToUse = name || scenarioName;
     if (!scenarioNameToUse.trim()) {
       alert('Please enter a scenario name');
       return;
     }
 
-    const newScenario = {
-      id: Date.now(),
-      name: scenarioNameToUse.trim(),
-      colours: JSON.parse(JSON.stringify(colours)), // Deep copy
-      savedAt: new Date().toISOString()
-    };
+    try {
+      const response = await fetch('/api/scenarios', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: scenarioNameToUse.trim(),
+          colours: JSON.parse(JSON.stringify(colours)) // Deep copy
+        })
+      });
 
-    const updatedScenarios = [...scenarios, newScenario];
-    setScenarios(updatedScenarios);
-    localStorage.setItem('orderScenarios', JSON.stringify(updatedScenarios));
-    setScenarioName('');
-    setNewScenarioName('');
-    setShowScenarioInput(false);
-    setShowScenarioManager(false);
-    alert(`Scenario "${newScenario.name}" saved successfully!`);
+      if (response.ok) {
+        const newScenario = await response.json();
+        setScenarios([...scenarios, newScenario]);
+        setScenarioName('');
+        setNewScenarioName('');
+        setShowScenarioInput(false);
+        setShowScenarioManager(false);
+        alert(`Scenario "${newScenario.name}" saved successfully!`);
+      } else {
+        const error = await response.json();
+        alert(`Failed to save scenario: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error saving scenario:', error);
+      alert('Failed to save scenario. Please try again.');
+    }
   };
 
-  const loadScenario = (scenarioId) => {
+  const loadScenario = async (scenarioId) => {
     const scenario = scenarios.find(s => s.id === scenarioId);
     if (scenario) {
       if (window.confirm(`Load scenario "${scenario.name}"? This will replace your current order.`)) {
-        setColours(JSON.parse(JSON.stringify(scenario.colours))); // Deep copy
-        setSelectedScenario(scenarioId);
+        try {
+          const response = await fetch(`/api/scenarios/${scenarioId}`);
+          if (response.ok) {
+            const loadedScenario = await response.json();
+            setColours(JSON.parse(JSON.stringify(loadedScenario.colours))); // Deep copy
+            setSelectedScenario(scenarioId);
+          } else {
+            alert('Failed to load scenario. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error loading scenario:', error);
+          // Fallback to local scenario data
+          setColours(JSON.parse(JSON.stringify(scenario.colours)));
+          setSelectedScenario(scenarioId);
+        }
       }
     }
   };
 
-  const deleteScenario = (scenarioId, e) => {
+  const deleteScenario = async (scenarioId, e) => {
     e.stopPropagation();
     const scenario = scenarios.find(s => s.id === scenarioId);
     if (scenario && window.confirm(`Delete scenario "${scenario.name}"?`)) {
-      const updatedScenarios = scenarios.filter(s => s.id !== scenarioId);
-      setScenarios(updatedScenarios);
-      localStorage.setItem('orderScenarios', JSON.stringify(updatedScenarios));
-      if (selectedScenario === scenarioId) {
-        setSelectedScenario(null);
+      try {
+        const response = await fetch(`/api/scenarios/${scenarioId}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          const updatedScenarios = scenarios.filter(s => s.id !== scenarioId);
+          setScenarios(updatedScenarios);
+          if (selectedScenario === scenarioId) {
+            setSelectedScenario(null);
+          }
+        } else {
+          const error = await response.json();
+          alert(`Failed to delete scenario: ${error.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error deleting scenario:', error);
+        alert('Failed to delete scenario. Please try again.');
       }
     }
   };
