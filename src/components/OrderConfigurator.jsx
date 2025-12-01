@@ -172,6 +172,21 @@ export default function OrderConfigurator() {
   }, []);
 
   // Apply dark mode to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
     const handleClickOutside = (event) => {
       const target = event.target;
       
