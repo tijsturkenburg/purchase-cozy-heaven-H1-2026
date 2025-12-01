@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles, Menu, Settings, Package, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, AlertCircle, CheckCircle, Save, FolderOpen, Trash2, X, Sparkles, Menu, Settings, Package, ShoppingBag, Moon, Sun } from 'lucide-react';
 import ProductManager from './ProductManager';
 import PurchaseOrderManager from './PurchaseOrderManager';
 
@@ -108,6 +108,11 @@ export default function OrderConfigurator() {
   const [newScenarioName, setNewScenarioName] = useState('');
   const [showProductManager, setShowProductManager] = useState(false);
   const [showPurchaseOrderManager, setShowPurchaseOrderManager] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check localStorage or default to false
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   // Product distribution percentages (unit-based from image)
   const unitPercentages = {
@@ -818,35 +823,42 @@ export default function OrderConfigurator() {
   };
 
   return (
-    <div className="w-full max-w-[95vw] mx-auto p-2 bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="w-full max-w-[95vw] mx-auto p-2 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Menu Bar */}
-      <div className="bg-white rounded-lg shadow-lg p-2 mb-2">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 mb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-6 h-6 text-blue-600" />
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Order configurator</h1>
-              <p className="text-slate-600 text-xs">MOQ: {moq.toLocaleString()}m per colour</p>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Order configurator</h1>
+              <p className="text-slate-600 dark:text-slate-400 text-xs">MOQ: {moq.toLocaleString()}m per colour</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleDarkMode}
+              className="px-3 py-1.5 bg-slate-600 dark:bg-slate-700 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors font-medium text-sm flex items-center gap-1"
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <div className="relative menu-dropdown">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="px-3 py-1.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm flex items-center gap-1"
+                className="px-3 py-1.5 bg-slate-600 dark:bg-slate-700 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors font-medium text-sm flex items-center gap-1"
                 title="Menu"
               >
                 <Menu className="w-4 h-4" />
                 Menu
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg z-30 min-w-[200px] menu-dropdown">
+                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-lg z-30 min-w-[200px] menu-dropdown">
                   <button
                     onClick={() => {
                       setShowScenarioManager(true);
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 flex items-center gap-2 text-sm"
                   >
                     <Save className="w-4 h-4" />
                     Create Scenario
@@ -856,18 +868,18 @@ export default function OrderConfigurator() {
                       setShowLoadDropdown(!showLoadDropdown);
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 flex items-center gap-2 text-sm"
                   >
                     <FolderOpen className="w-4 h-4" />
                     Load Scenario
                   </button>
-                  <div className="border-t border-slate-200 my-1"></div>
+                  <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
                   <button
                     onClick={() => {
                       setShowProductManager(true);
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 flex items-center gap-2 text-sm"
                   >
                     <Package className="w-4 h-4" />
                     Manage Products
@@ -877,13 +889,13 @@ export default function OrderConfigurator() {
                       setShowPurchaseOrderManager(true);
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left hover:bg-slate-100 flex items-center gap-2 text-sm"
+                    className="w-full px-4 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 flex items-center gap-2 text-sm"
                   >
                     <ShoppingBag className="w-4 h-4" />
                     Purchase Orders
                   </button>
-                  <div className="border-t border-slate-200 my-1"></div>
-                  <div className="px-4 py-2 text-xs text-slate-500">
+                  <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
+                  <div className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">
                     {scenarios.length} scenario{scenarios.length !== 1 ? 's' : ''} saved
                   </div>
                 </div>
@@ -893,7 +905,7 @@ export default function OrderConfigurator() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-3">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
           </div>
@@ -919,13 +931,13 @@ export default function OrderConfigurator() {
                 Save Scenario
               </button>
               {showScenarioInput && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg p-2 z-20 min-w-[250px] scenario-dropdown">
+                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-lg p-2 z-20 min-w-[250px] scenario-dropdown">
                   <input
                     type="text"
                     value={scenarioName}
                     onChange={(e) => setScenarioName(e.target.value)}
                     placeholder="Enter scenario name"
-                    className="w-full px-2 py-1 border border-slate-300 rounded text-sm mb-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-100 rounded text-sm mb-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     onKeyPress={(e) => e.key === 'Enter' && saveScenario()}
                     autoFocus
                   />
@@ -963,9 +975,9 @@ export default function OrderConfigurator() {
                   Load Scenario
                 </button>
                 {showLoadDropdown && (
-                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg z-20 min-w-[250px] max-h-[300px] overflow-y-auto scenario-dropdown">
+                  <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-lg z-20 min-w-[250px] max-h-[300px] overflow-y-auto scenario-dropdown">
                     {scenarios.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-slate-500">No saved scenarios</div>
+                      <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">No saved scenarios</div>
                     ) : (
                       scenarios.map((scenario) => (
                         <div
@@ -979,8 +991,8 @@ export default function OrderConfigurator() {
                           }`}
                         >
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-slate-800">{scenario.name}</div>
-                            <div className="text-xs text-slate-500">
+                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100">{scenario.name}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
                               {new Date(scenario.savedAt).toLocaleDateString()}
                             </div>
                           </div>
@@ -1026,7 +1038,7 @@ export default function OrderConfigurator() {
                     type="text"
                     value={colour.name}
                     onChange={(e) => updateColourName(colour.id, e.target.value)}
-                    className="px-1.5 py-0.5 border border-slate-300 rounded font-medium text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent w-full"
+                    className="px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-100 rounded font-medium text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent w-full"
                   />
                   {colours.length > 1 && (
                     <button
@@ -1040,7 +1052,7 @@ export default function OrderConfigurator() {
                 </div>
                 
                 <div className="mb-1">
-                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                     <div
                       className={`h-full transition-all ${
                         meetsMOQ ? 'bg-green-600' : 'bg-amber-500'
@@ -1052,8 +1064,8 @@ export default function OrderConfigurator() {
 
                 <div className="text-xs space-y-0.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Total:</span>
-                    <span className="font-bold text-slate-800">{total.toFixed(0)}m</span>
+                    <span className="text-slate-600 dark:text-slate-400">Total:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-100">{total.toFixed(0)}m</span>
                   </div>
                   {!meetsMOQ && (
                     <div className="text-amber-700 font-medium text-xs">
@@ -1095,16 +1107,16 @@ export default function OrderConfigurator() {
         {/* Optimization Modal */}
         {showOptimization && optimizationResult && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowOptimization(null)}>
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="p-4 border-b border-slate-200">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-600" />
                     Optimize Composition: {optimizationResult.colourName}
                   </h2>
                   <button
                     onClick={() => setShowOptimization(null)}
-                    className="text-slate-500 hover:text-slate-700"
+                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1114,8 +1126,8 @@ export default function OrderConfigurator() {
               <div className="p-4">
                 <div className="mb-4 grid grid-cols-3 gap-4">
                   <div className="bg-slate-50 p-3 rounded">
-                    <div className="text-xs text-slate-600">Current Total</div>
-                    <div className="text-lg font-bold text-slate-800">{optimizationResult.currentTotal.toFixed(1)}m</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Current Total</div>
+                    <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{optimizationResult.currentTotal.toFixed(1)}m</div>
                   </div>
                   <div className="bg-blue-50 p-3 rounded">
                     <div className="text-xs text-blue-600">Target (MOQ)</div>
@@ -1132,7 +1144,7 @@ export default function OrderConfigurator() {
                 {optimizationResult.suggestions.length > 0 ? (
                   <>
                     <div className="mb-3">
-                      <h3 className="font-semibold text-slate-800 mb-2">
+                      <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">
                         {optimizationResult.difference > 0 ? 'Suggested Additions:' : 'Suggested Reductions:'}
                       </h3>
                       <div className="space-y-2">
@@ -1147,16 +1159,16 @@ export default function OrderConfigurator() {
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
-                                <div className="font-medium text-sm text-slate-800">
+                                <div className="font-medium text-sm text-slate-800 dark:text-slate-100">
                                   {suggestion.productName}
                                 </div>
-                                <div className="text-xs text-slate-600 mt-1">
+                                <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                                   {suggestion.action === 'add' ? '+' : '-'}{suggestion.units} units 
                                   ({suggestion.currentQty} → {suggestion.newQty})
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-sm font-bold text-slate-800">
+                                <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                   {suggestion.action === 'add' ? '+' : '-'}{suggestion.totalFabric.toFixed(1)}m
                                 </div>
                                 <div className="text-xs text-slate-500">
@@ -1186,7 +1198,7 @@ export default function OrderConfigurator() {
                 ) : (
                   <div className="text-center py-8">
                     <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                    <p className="text-slate-600">
+                    <p className="text-slate-600 dark:text-slate-400">
                       {optimizationResult.currentTotal >= moq 
                         ? 'This colour already meets the MOQ! No optimization needed.'
                         : 'No optimization suggestions available.'}
@@ -1207,16 +1219,16 @@ export default function OrderConfigurator() {
         {/* Percentage Calculator Modal */}
         {showPercentageCalculator && percentageResult && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowPercentageCalculator(null)}>
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="p-4 border-b border-slate-200">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                     <span className="text-2xl">%</span>
                     Calculate from Percentages: {percentageResult.colourName}
                   </h2>
                   <button
                     onClick={() => setShowPercentageCalculator(null)}
-                    className="text-slate-500 hover:text-slate-700"
+                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1227,7 +1239,7 @@ export default function OrderConfigurator() {
                 <div className="mb-4 bg-slate-50 p-3 rounded">
                   <div className="grid grid-cols-2 gap-4 mb-3">
                     <div>
-                      <label className="text-xs text-slate-600 mb-1 block">Total Fabric (meters)</label>
+                      <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Total Fabric (meters)</label>
                       <input
                         type="number"
                         value={percentageResult.totalFabricMeters}
@@ -1242,7 +1254,7 @@ export default function OrderConfigurator() {
                     </div>
                     <div className="flex items-end">
                       <div className="w-full">
-                        <div className="text-xs text-slate-600">Calculated Total Fabric</div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400">Calculated Total Fabric</div>
                         <div className="text-lg font-bold text-teal-800">{percentageResult.summary.totalCalculatedFabric.toFixed(1)}m</div>
                       </div>
                     </div>
@@ -1285,7 +1297,7 @@ export default function OrderConfigurator() {
                                   <span className="font-medium">{req.item}</span>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-slate-500 text-xs">Fabric/unit</div>
+                                  <div className="text-slate-500 dark:text-slate-400 text-xs">Fabric/unit</div>
                                   <div className="font-bold">{req.fabricPerUnit.toFixed(2)}m</div>
                                 </div>
                               </div>
@@ -1417,8 +1429,8 @@ export default function OrderConfigurator() {
         <div className="overflow-x-auto" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <table className="w-full border-collapse">
             <thead className="sticky top-0 z-20">
-              <tr className="bg-slate-800 text-white">
-                <th className="px-2 py-1.5 text-left sticky left-0 bg-slate-800 z-30 min-w-[160px] text-xs font-semibold">Product</th>
+              <tr className="bg-slate-800 dark:bg-slate-900 text-white">
+                <th className="px-2 py-1.5 text-left sticky left-0 bg-slate-800 dark:bg-slate-900 z-30 min-w-[160px] text-xs font-semibold">Product</th>
                 <th className="px-2 py-1.5 text-left text-xs font-semibold min-w-[90px]">SKU</th>
                 <th className="px-2 py-1.5 text-left text-xs font-semibold min-w-[110px]">Details</th>
                 <th className="px-2 py-1.5 text-right text-xs font-semibold min-w-[90px]">Fabric/unit</th>
@@ -1427,8 +1439,8 @@ export default function OrderConfigurator() {
                     {colour.name}
                   </th>
                 ))}
-                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold min-w-[90px]">Total units</th>
-                <th className="px-2 py-1.5 text-right bg-slate-700 text-xs font-semibold min-w-[90px]">Total fabric</th>
+                <th className="px-2 py-1.5 text-right bg-slate-700 dark:bg-slate-800 text-xs font-semibold min-w-[90px]">Total units</th>
+                <th className="px-2 py-1.5 text-right bg-slate-700 dark:bg-slate-800 text-xs font-semibold min-w-[90px]">Total fabric</th>
               </tr>
             </thead>
             <tbody>
@@ -1445,7 +1457,7 @@ export default function OrderConfigurator() {
                 return (
                   <React.Fragment key={setProduct.id}>
                     {/* Set Row */}
-                    <tr className="bg-blue-50 border-b border-blue-200">
+                    <tr className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
                       <td className="px-2 py-1 font-semibold text-blue-900 sticky left-0 z-10 text-xs border-r border-blue-200" style={{ backgroundColor: '#dbeafe' }}>
                         📦 {setProduct.item}
                       </td>
@@ -1523,7 +1535,7 @@ export default function OrderConfigurator() {
                       const totalFabric = totalUnits * fabricPerUnit;
                       
                       return (
-                        <tr key={duvetCover.id} className="bg-green-50 hover:bg-green-100 transition-colors border-l-2 border-green-400">
+                        <tr key={duvetCover.id} className="bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border-l-2 border-green-400 dark:border-green-700">
                           <td className="px-2 py-1 pl-4 font-medium text-slate-700 sticky left-0 z-10 text-xs" style={{ backgroundColor: '#f0fdf4' }}>
                             └─ {duvetCover.item}
                           </td>
@@ -1806,12 +1818,12 @@ export default function OrderConfigurator() {
         </div>
 
         {/* Summary */}
-        <div className="mt-2 p-2 bg-slate-100 rounded-lg">
-          <h3 className="font-bold text-slate-800 mb-1 text-sm">Order summary</h3>
+        <div className="mt-2 p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1 text-sm">Order summary</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <div>
-              <div className="text-xs text-slate-600">Total colours</div>
-              <div className="text-lg font-bold text-slate-800">{colours.length}</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">Total colours</div>
+              <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{colours.length}</div>
             </div>
             <div>
               <div className="text-xs text-slate-600">Colours meeting MOQ</div>
@@ -1881,7 +1893,7 @@ export default function OrderConfigurator() {
                     value={newScenarioName}
                     onChange={(e) => setNewScenarioName(e.target.value)}
                     placeholder="Enter scenario name..."
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-100 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     onKeyPress={(e) => e.key === 'Enter' && saveScenario(newScenarioName)}
                   />
                   <button
@@ -1891,14 +1903,14 @@ export default function OrderConfigurator() {
                     Save Scenario
                   </button>
                 </div>
-                <p className="text-xs text-slate-600 mt-2">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
                   Current order will be saved as a new scenario
                 </p>
               </div>
 
               {/* Saved Scenarios */}
               <div>
-                <h3 className="font-semibold text-slate-800 mb-3">Saved Scenarios ({scenarios.length})</h3>
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-3">Saved Scenarios ({scenarios.length})</h3>
                 {scenarios.length === 0 ? (
                   <div className="text-center py-8 text-slate-500">
                     <FolderOpen className="w-12 h-12 mx-auto mb-2 text-slate-300" />

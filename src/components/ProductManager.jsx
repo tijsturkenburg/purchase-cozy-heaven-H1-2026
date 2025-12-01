@@ -132,11 +132,11 @@ export default function ProductManager({ onClose, onProductSelect }) {
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-600" />
             Product Manager
           </h2>
