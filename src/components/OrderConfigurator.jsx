@@ -171,8 +171,7 @@ export default function OrderConfigurator() {
     loadScenarios();
   }, []);
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
+  // Apply dark mode to document
     const handleClickOutside = (event) => {
       const target = event.target;
       
